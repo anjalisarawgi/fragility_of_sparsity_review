@@ -5,4 +5,4 @@ This repository aims to reproduce the results of the paper with 3 different data
 
 If you use this work, please cite the following paper:
 
-Proutiere, A., & Millere, E. (2023). *Learning safety targets for model predictive control*. arXiv. https://arxiv.org/abs/2311.02299
+Michal Kolesár, Ulrich K. Müller, Sebastian T. Roelsgaard (2024). *The Fragility of Sparsity*. arXiv. https://arxiv.org/abs/2311.02299
