@@ -1,2 +1,2 @@
 # Ignore the data folder
-Data/
+Data/MNIST/mnist_train.csv
