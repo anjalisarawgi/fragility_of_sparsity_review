@@ -1,7 +1,4 @@
 import pandas as pd
-from sklearn.model_selection import train_test_split
-from sklearn.linear_model import LinearRegression
-from sklearn.metrics import mean_squared_error
 import matplotlib.pyplot as plt
 from sklearn.metrics import mean_squared_error, mean_absolute_error
 import numpy as np
@@ -101,3 +98,7 @@ def standard_error_model(X, y, bootstrap=1000, alpha=best_alpha):
 model_mean, model_se = standard_error_model(X_scaled, y)
 print("model_mean",model_mean)
 print("model_se",model_se)
+
+if __name__ == "__main__":
+    print("Hello World")
+
