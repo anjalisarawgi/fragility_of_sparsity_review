@@ -1,1 +1,3 @@
-normalization
+# Ignore the data folder
+Data/MNIST/mnist_train.csv
+Data/MNIST/mnist_test.csv
