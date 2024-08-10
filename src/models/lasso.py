@@ -1,39 +1,41 @@
 import pandas as pd
-from sklearn.metrics import mean_squared_error, mean_absolute_error
 import numpy as np
-# import statsmodels.api as sm
+import statsmodels.api as sm
 import pandas as pd
 from sklearn.linear_model import Lasso
+from sklearn.model_selection import GridSearchCV, KFold
 
-def lasso(x, y, alpha):
-    lasso = Lasso(alpha=0.1)
-    lasso_model= lasso.fit(x, y)
-    y_pred = lasso.predict(x)
-    print("Lasso Model Results............................................\n")
-    print('Coefficients:', lasso_model.coef_)
-    print('Mean Squared Error:', mean_squared_error(y, y_pred))
-    print('Mean Absolute Error:', mean_absolute_error(y, y_pred))
+def lasso(x, y, feature_names):
+    params = {"alpha":np.arange(0.00001, 10, 500)}
+    kf=KFold(n_splits=5,shuffle=True, random_state=42)
 
-    # residuals
-    residuals = y - y_pred
-    n = len(y)
-    p = x.shape[1]
-    standard_error = np.sqrt(np.sum(residuals**2) / (n - p - 1))
-    print('Standard Error of the Model:', standard_error)
+    lasso = Lasso()
+    lasso_cv=GridSearchCV(lasso, param_grid=params, cv=kf)
+    lasso_cv.fit(x, y)
+    print("Best Params {}".format(lasso_cv.best_params_))
+
+    # lasso model to plot the best features
+    lasso_model = Lasso(alpha=lasso_cv.best_params_['alpha'])
+    lasso_result = lasso_model.fit(x, y)
+
+    print("lasso model results:", lasso_result.coef_)
+    print("lasso model results:", lasso_result.intercept_)
+
+    # Identify selected features
+    selected_features = [feature_names[i] for i in range(len(feature_names)) if lasso_result.coef_[i] != 0]
+    removed_features = [feature_names[i] for i in range(len(feature_names)) if lasso_result.coef_[i] == 0]
+
+    print("Selected features after Lasso:", selected_features)
+    print("Removed features after Lasso:", removed_features)
 
 
-if __name__=='__main__':
-    data = pd.read_csv('Data/screen_time/yoga.csv')
-    print(data.head())
 
-    data.columns = [col.strip() for col in data.columns]
-    print(data.columns)
-    data['Date'] = pd.to_datetime(data['Date'], format='%m/%d/%y')
-
-    data['DayOfWeek'] = data['Date'].dt.dayofweek
-
-    x = data[['Yoga', 'DayOfWeek', 'Social Networking', 'Reading and Reference','Other', 'Productivity', 'Health and Fitness','Entertainment','Creativity']]
-    y = data['Total Screen Time']
-
-    lasso(x, y, 0.1)
-    print("Lasso Model has been run successfully.")
+if __name__ == "__main__":
+    feature_names = [
+        "CRIM", "ZN", "INDUS", "CHAS", "NOX", "RM", "AGE", "DIS", "RAD", "TAX", "PTRATIO", "B", "LSTAT"
+    ]
+    data_url = "http://lib.stat.cmu.edu/datasets/boston"
+    raw_df = pd.read_csv(data_url, sep="\s+", skiprows=22, header=None)
+    data = np.hstack([raw_df.values[::2, :], raw_df.values[1::2, :2]])
+    target = raw_df.values[1::2, 2]
+    lasso(data, target, feature_names)
