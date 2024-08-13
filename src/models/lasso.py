@@ -17,7 +17,6 @@ def lasso(x, y, feature_names):
     # lasso model to plot the best features
     lasso_model = Lasso(alpha=lasso_cv.best_params_['alpha'])
     lasso_result = lasso_model.fit(x, y)
-
     print("lasso model results:", lasso_result.coef_)
     print("lasso model results:", lasso_result.intercept_)
 
