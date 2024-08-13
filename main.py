@@ -7,27 +7,38 @@ from sklearn.linear_model import LinearRegression, Lasso
 from sklearn.metrics import mean_squared_error
 from sklearn.model_selection import train_test_split
 from sklearn.utils import resample
-
-
-
+from src.model import model_fit
 
 def main(ref_cat_col):
     # load the data
     data = pd.read_csv('Data/processed/communities_and_crime.csv')
     print(data.head())
+    y = data['ViolentCrimesPerPop']
+    D = data['PolicPerPop']
+    x = data.drop(columns=['ViolentCrimesPerPop', 'PolicPerPop'])
+    print(" D name:", D.name)
+    print("x shape: ", x.shape, "D shape: ", D.shape, "y shape: ", y.shape)
 
+    print(" D type:", D.dtype)
+    print("y type: ", y.dtype)
+    print(" D unique values:", D.unique())
+    # conveer d to floar
+    D = D.astype(float)
+    print(" D type:", D.dtype)
+    
     # convert to dummies and drop the reference category
     print("number of x columns before dummification: ", len(data.columns)-2)
     data_dummified = process_categorical_numerical(data, ref_cat_col=ref_cat_col)
     print(data_dummified.head())
     print("number of columns after dummification: ", len(data_dummified.columns)-2)
-
-    # define x, y, and D
-    y = data_dummified['ViolentCrimesPerPop']
-    D = data_dummified['PolicPerPop']
     x = data_dummified.drop(columns=['ViolentCrimesPerPop', 'PolicPerPop'])
+    print("x shape: ", x.shape, "D shape: ", D.shape, "y shape: ", y.shape)
+    # define x, y, and D
+   
 
-    # ols model
+    # model 
+    model = model_fit(x, D, y, model="Lasso")
+    print(model.summary())
 
 
 

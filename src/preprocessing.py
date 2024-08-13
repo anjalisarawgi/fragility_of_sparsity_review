@@ -44,6 +44,8 @@ def main(filepath, output_filepath, treatment_var, outcome_var):
     
     # Save the processed data
     save_data(processed_data, output_filepath)
+    print("Data processing pipeline completed successfully.")
+    print(' D name:', D.name)
 
 # Parameters for the script
 filepath = 'Data/raw/communities_and_crime.csv'
