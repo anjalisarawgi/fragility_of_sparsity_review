@@ -52,24 +52,17 @@ def save_data(data, output_filepath):
 
 def main(filepath, output_filepath, treatment_var, outcome_var):
     """Main function to execute the data processing pipeline."""
-    # Load the data
+
     data = load_data(filepath)
     if data is None:
         return
-
-    # Handle missing values
+    
     data = handle_missing_values(data)
-
-    # Summarize data
     summarize_data(data)
 
-    # Preprocess the data
     x, D, y = preprocess_data(data, treatment_var, outcome_var)
-    
-    # Combine processed data with treatment and outcome
     processed_data = pd.concat([x, D, y], axis=1)
     
-    # Save the processed data
     save_data(processed_data, output_filepath)
     print("Data processing pipeline completed successfully.")
 
