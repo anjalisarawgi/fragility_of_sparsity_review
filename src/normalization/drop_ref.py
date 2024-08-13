@@ -19,7 +19,10 @@ def process_categorical_numerical(data, ref_cat_col=1):
     
     # Convert categorical variables to dummies
     data_dummified = pd.get_dummies(data, drop_first=True)
+    
     print(f"Data shape after converting categorical variables: ", data_dummified.shape)
+    
+
     
     # Drop the specified reference category (if applicable)
     for col in categorical.columns:

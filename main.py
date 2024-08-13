@@ -12,32 +12,30 @@ from src.model import model_fit
 def main(ref_cat_col):
     # load the data
     data = pd.read_csv('Data/processed/communities_and_crime.csv')
-    print(data.head())
-    y = data['ViolentCrimesPerPop']
-    D = data['population']
-    x = data.drop(columns=['ViolentCrimesPerPop', 'population'])
-
-    print("number of categorical columns: ", len(data.select_dtypes(include=['object']).columns))
-
     
-    # convert to dummies and drop the reference category
+    print("number of categorical columns: ", len(data.select_dtypes(include=['object']).columns))
+    
     print("number of x columns before dummification: ", len(data.columns)-2)
     data_dummified = process_categorical_numerical(data, ref_cat_col=ref_cat_col)
-
     print("number of columns after dummification: ", len(data_dummified.columns)-2)
+    
     x = data_dummified.drop(columns=['ViolentCrimesPerPop', 'population'])
+    D = data_dummified['population']
+    y = data_dummified['ViolentCrimesPerPop']
+
     print("x shape: ", x.shape, "D shape: ", D.shape, "y shape: ", y.shape)
    
 
     # model 
-    model = model_fit(x, D, y, model="ols")
-    print(model.summary())
+    model = model_fit(x, D, y, model="lasso")
+    # print(model.summary())
+    print("population coef and std err: ", model.params['population'], model.bse['population'])
 
 
 
 
 if __name__ == '__main__':
-    main(ref_cat_col=1)
+    main(ref_cat_col=9) 
 
 
 # convert
