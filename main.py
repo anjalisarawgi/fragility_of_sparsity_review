@@ -14,12 +14,7 @@ from statsmodels.stats.outliers_influence import variance_inflation_factor
 from sklearn.preprocessing import PolynomialFeatures
 from src.transforms.feature_transform import add_more_features
 from src.transforms.assumptions import check_assumptions_after
-
-def calculate_vif(X):
-    vif_data = pd.DataFrame()
-    vif_data["feature"] = X.columns
-    vif_data["VIF"] = [variance_inflation_factor(X.values, i) for i in range(X.shape[1])]
-    return vif_data
+from src.transforms.pre_regression_checks import check_multicollinearity, check_perfect_multicollinearity, check_linearity
 
 def save_results(case, method,model, model_name, mse, ref_cat_col):
     """ Save results to the 'results' directory. """
@@ -75,17 +70,35 @@ def main(ref_cat_col, method, model_name, case):
 
     if case == "original":
         print("Original case: Using the original features.")
-    elif case == "close_to_n":
-        print("Case where p is close to n (around 1800 features): Adding interaction terms.")
+    elif case == "close_to_n" or case == "more_than_n":
+        print("Adding more features.")
         x = add_more_features(x, degree=2, case = case)  # Interaction terms limited to around 1800 features
-    elif case == "more_than_n":
-        print("Case where p is more than n: Adding more polynomial features.")
-        x = add_more_features(x, degree=3, case = case)  # More polynomial features
+        print("Shape of x after adding more features: ", x.shape)
 
     print(f"Shape of x after feature engineering ({case}): ", x.shape)
 
 
     x = pd.DataFrame(x)
+    
+    x = x.astype(int) # convert boolean dummies to integers (0, 1)
+    print(" data types: ", x.dtypes.value_counts())
+
+    # # 1. Multicollinearity Check
+    # vif_data = check_multicollinearity(x)
+    # columns_to_drop = ['PctRecImmig5', 'PctRecImmig8', 'PctRecImmig10', 'PctLargHouseFam', 'PctLargHouseOccup', 'PersPerOccupHous', 'OwnOccMedVal', 'PctSameHouse85', 'perCapInc', 'whitePerCap']
+    # x_dropped = x.drop(columns=columns_to_drop)
+
+    # vif_data = check_multicollinearity(x_dropped)
+
+    # print("Variance Inflation Factor (VIF):", vif_data)
+
+    # # 2. Perfect Multicollinearity Check
+    # check_perfect_multicollinearity(x_dropped)
+
+    # # 3. Linearity Check
+    # check_linearity(x_dropped, y)
+
+
 
     x = normalize_data(x, method)  # normalize the data
 
@@ -103,13 +116,16 @@ def main(ref_cat_col, method, model_name, case):
 
 
 if __name__ == '__main__':
-    main(ref_cat_col= 3, method='demean', model_name='ols', case='close_to_n') 
+    main(ref_cat_col= 3, method='demean', model_name='ols', case='more_than_n') 
 
 
 # convert
  
 
 ### keep the main set intact after kepeing interactions
+    
+    # there is a problem with increasing the dimensions of the data
+    # it isnt working as expected
 ######## check for outliers
 
 # check for multicollinearity

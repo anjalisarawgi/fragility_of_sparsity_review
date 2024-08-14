@@ -6,6 +6,8 @@ from statsmodels.stats.outliers_influence import variance_inflation_factor
 from statsmodels.stats.stattools import durbin_watson
 from scipy.stats import shapiro, probplot
 
+
+
 def check_assumptions_after(X, y, model):
     """ Function to check the assumptions of linear regression """
     
