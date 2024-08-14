@@ -30,7 +30,14 @@ def save_results(case, method,model, model_name, mse, ref_cat_col):
         'R2': model.rsquared,
         'MSE': mse, 
     })
+
+    # Set the feature names as the index
+    coef_df.index.name = 'Feature'
+
+    # Save the DataFrame to a CSV file
     coef_df.to_csv(os.path.join(results_dir, f'{model_name}_model_coefficients_{method}_{ref_cat_col}.csv'), index=True)
+
+    # coef_df.to_csv(os.path.join(results_dir, f'{model_name}_model_coefficients_{method}_{ref_cat_col}.csv'), index=True)
 
 
 def train_and_evaluate_model(x, D, y, model_name):
@@ -116,7 +123,7 @@ def main(ref_cat_col, method, model_name, case):
 
 
 if __name__ == '__main__':
-    main(ref_cat_col= 3, method='demean', model_name='ols', case='more_than_n') 
+    main(ref_cat_col= 1, method='demean', model_name='lasso', case='more_than_n') 
 
 
 # convert

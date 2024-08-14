@@ -61,7 +61,7 @@ def add_more_features(x, degree, case):
 
     x_final = np.hstack([x_original, X_combined])
     final_feature_names = np.hstack([x_original.columns, combined_feature_names])
-    print("final_feature_names: ", list(final_feature_names))
+    # print("final_feature_names: ", list(final_feature_names))
 
     final_shape = x_final.shape
     print("final_shape: ", final_shape)
