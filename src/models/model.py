@@ -7,24 +7,24 @@ from sklearn.model_selection import train_test_split
 from sklearn.utils import resample
 import statsmodels.api as sm
 
+
 def model_fit(x, D, y, model):
     # Convert all columns to numeric, coercing errors to NaN and dropping them
-    x = x.apply(pd.to_numeric, errors='coerce')
-    D = pd.to_numeric(D, errors='coerce')
-    y = pd.to_numeric(y, errors='coerce')
+    # x = x.apply(pd.to_numeric, errors='coerce')
+    # D = pd.to_numeric(D, errors='coerce')
+    # y = pd.to_numeric(y, errors='coerce')
     
     # Convert boolean dummies to integers (0, 1)
     x = x.astype(int)
     
     # Drop any remaining NaNs after conversion
-    x = x.dropna()
-    D = D.dropna()
-    y = y.dropna()
+    # x = x.dropna()
+    # D = D.dropna()
+    # y = y.dropna()
 
     if model == "lasso":
         # step 1: Propensity score estimation
-        lasso = LassoCV(cv=5).fit(x, D)
-        # lasso = Lasso(alpha=0.1).fit(x, D)
+        lasso = LassoCV(cv=5).fit(x, D) # lasso = Lasso(alpha=0.1).fit(x, D)
         selected_features = x.columns[lasso.coef_ != 0]
         print("number of selected features for the control matrix: ", len(selected_features))
         print("selected features: ", selected_features)
@@ -40,9 +40,6 @@ def model_fit(x, D, y, model):
 
     elif model == "post_double_lasso":
         pass
-    elif model =="grouped_lasso":
-        pass
-
     else: 
         X = pd.concat([D, x], axis=1)
         X = sm.add_constant(X)
@@ -50,15 +47,4 @@ def model_fit(x, D, y, model):
     return model
        
 
-        
-if __name__ == '__main__':
-    data = pd.read_csv('Data/processed/communities_and_crime.csv')
-   
-    data_dummified = process_categorical_numerical(data, ref_cat_col=1)
-    print(data_dummified.head())
-    print("data_dummified.shape: ", data_dummified.shape)
-    y = data_dummified['ViolentCrimesPerPop']
-    D = data_dummified['population']
-    x = data_dummified.drop(columns=['ViolentCrimesPerPop', 'population'])
-    model = model_fit(x, D, y, model="lasso")
-    print(model.summary())
+    

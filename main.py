@@ -7,101 +7,116 @@ from sklearn.linear_model import LinearRegression, Lasso
 from sklearn.metrics import mean_squared_error
 from sklearn.model_selection import train_test_split
 from sklearn.utils import resample
-from src.model import model_fit
+from src.models.model import model_fit
 import statsmodels.api as sm
 from src.normalization.offsets import normalize_data
+from statsmodels.stats.outliers_influence import variance_inflation_factor
+from sklearn.preprocessing import PolynomialFeatures
+from src.transforms.feature_transform import add_more_features
+from src.transforms.assumptions import check_assumptions_after
 
-def main(ref_cat_col):
-    # load the data
-    data = pd.read_csv('Data/processed/communities_and_crime.csv')
+def calculate_vif(X):
+    vif_data = pd.DataFrame()
+    vif_data["feature"] = X.columns
+    vif_data["VIF"] = [variance_inflation_factor(X.values, i) for i in range(X.shape[1])]
+    return vif_data
+
+def save_results(case, method,model, model_name, mse, ref_cat_col):
+    """ Save results to the 'results' directory. """
+
+    results_dir = os.path.join('results', case)
+    os.makedirs(results_dir, exist_ok=True)
     
-    print("number of categorical columns: ", len(data.select_dtypes(include=['object']).columns))
-    
-    print("number of x columns before dummification: ", len(data.columns)-2)
-    data_dummified = process_categorical_numerical(data, ref_cat_col=ref_cat_col)
-    print("number of columns after dummification: ", len(data_dummified.columns)-2)
-    
-    x = data_dummified.drop(columns=['ViolentCrimesPerPop', 'population'])
-    D = data_dummified['population']
-    y = data_dummified['ViolentCrimesPerPop']
-
-    print("x shape: ", x.shape, "D shape: ", D.shape, "y shape: ", y.shape)
-   
-    # normalize the data
-    x = normalize_data(x, method="demean")  
+    # Save model coefficients and standard errors
+    coef_df = pd.DataFrame({
+        'number of features selected': model.params.shape[0],
+        'Coefficient': model.params,
+        'StdErr': model.bse, 
+        'R2': model.rsquared,
+        'MSE': mse, 
+    })
+    coef_df.to_csv(os.path.join(results_dir, f'{model_name}_model_coefficients_{method}_{ref_cat_col}.csv'), index=True)
 
 
-    # model 
-    model = model_fit(x, D, y, model="lasso")
-    # print(model.summary())
-    print("population coef and std err: ", model.params['population'], model.bse['population'])
-
-    
-
-    # train test split
-    # Combine X and D into a single feature set
+def train_and_evaluate_model(x, D, y, model_name):
     X_D = pd.concat([x, D], axis=1)
-
-    # Split the data into train and test sets
     X_train, X_test, y_train, y_test = train_test_split(X_D, y, test_size=0.2, random_state=42)
 
-    print("Training set size: ", X_train.shape)
-    print("Test set size: ", X_test.shape)
-    print("y_train size: ", y_train.shape)
-
-    # Fit the model on the training data
     x = X_train.drop(columns='population')
     D = X_train['population']
     y = y_train
-    model = model_fit(x, D, y, model="lasso")
-    print("number of features selected: ", len(model.params)-1)
-    # print(model.summary())
-    print("x.shape: ", x.shape, "D.shape: ", D.shape, "y.shape: ", y.shape)
-    print("X_test shape: ", X_test.shape)
 
-    print("selected features: ", model.params.index)
+    model = model_fit(x, D, y, model_name) # model on the training data
 
-    
-    # X_test =  X_test[model.params.index[1:]].shape
-
-    # remove constant from the model
-    print("xtest with the selected features: ",X_test[model.params.index[1:]].shape)
-
-    selected_features = model.params.index
-    print("selected features: ", selected_features)
-   
-    # y_pred = model.predict( X_test[model.params.index[1:]].shape)
-    # print("y_pred shape: ", y_pred.shape)
-
+    # Select the features in the test set based on the model
     X_test_selected = X_test[model.params.index[1:]]    
     X_test_selected = sm.add_constant(X_test_selected, has_constant='add')
     print("X_test_selected shape: ", X_test_selected.shape)
 
     y_pred = model.predict(X_test_selected)
-
-
     # Evaluate the model performance
     mse = mean_squared_error(y_test, y_pred)
-    print("Mean Squared Error on the test set: ", mse) # 0.023750639979623824
+    print("Mean Squared Error on the test set: ", mse) 
+
+    return mse
 
 
 
+
+
+def main(ref_cat_col, method, model_name, case):
+    # load the data
+    data = pd.read_csv('Data/processed/communities_and_crime.csv')
+    data = process_categorical_numerical(data, ref_cat_col=ref_cat_col)
+    
+    x = data.drop(columns=['ViolentCrimesPerPop', 'population'])
+    D = data['population']
+    y = data['ViolentCrimesPerPop']
+
+    if case == "original":
+        print("Original case: Using the original features.")
+    elif case == "close_to_n":
+        print("Case where p is close to n (around 1800 features): Adding interaction terms.")
+        x = add_more_features(x, degree=2, case = case)  # Interaction terms limited to around 1800 features
+    elif case == "more_than_n":
+        print("Case where p is more than n: Adding more polynomial features.")
+        x = add_more_features(x, degree=3, case = case)  # More polynomial features
+
+    print(f"Shape of x after feature engineering ({case}): ", x.shape)
+
+
+    x = pd.DataFrame(x)
+
+    x = normalize_data(x, method)  # normalize the data
+
+    model = model_fit(x, D, y, model_name) # model
+    print("population coef and std err: ", model.params['population'], model.bse['population'])
+
+
+    # Fit the model on the training data and evaluate on the test data
+    mse = train_and_evaluate_model(x, D, y, model_name)  
+    # x = x.unsqueeze(0)
+    # check_assumptions_after(x, y, model)
+
+    # save the results
+    save_results(case, method, model,model_name,  mse, ref_cat_col)
 
 
 if __name__ == '__main__':
-    main(ref_cat_col= 3) 
+    main(ref_cat_col= 3, method='demean', model_name='ols', case='close_to_n') 
 
 
 # convert
  
 
-
+### keep the main set intact after kepeing interactions
 ######## check for outliers
 
 # check for multicollinearity
-
+# autocorrelation
+# heterogeneity
 # check for normaliity of the data
-
+# vif and saving results are left
 
 # preprocessing 
 # outliers
@@ -119,17 +134,23 @@ if __name__ == '__main__':
 
 # normalization methods: demenaning, median substraction, minmax scaling maybe, dropping collinear columns, subsets of columns drops, 
 
-# case 1: p as same : 
+# pls check / convert to categorical variables  -- but is this behaviour really really unexpected?
+    
+# case 1: p as same : (dont forget to increase the dimensions)
 # a. ols, lasso, post lasso, double lasso 
 # b. tests for p
+# c. all methods of normalization
 
-# case 2: p as high 
+# case 2: p as high -- also have train test split for this  (dont forget to increase the dimensions)
 # a. ols, lasso, post lasso, double lasso 
 # b. tests for p
+# c. all methods of normalization
 
-# case 3: p as more than n 
+
+# case 3: p as more than n (dont forget to increase the dimensions)
 # a. ols, lasso, post lasso, double lasso 
 # b. tests for p
+# c. all methods of normalization
 
 # adding noisy features too 
 # adding additonal multicollinear features too
