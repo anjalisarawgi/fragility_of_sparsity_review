@@ -1,24 +1,17 @@
 import pandas as pd
 import numpy as np
-from ucimlrepo import fetch_ucirepo
 import os
 from src.normalization.drop_ref import process_categorical_numerical
-from sklearn.linear_model import LinearRegression, Lasso
 from sklearn.metrics import mean_squared_error
 from sklearn.model_selection import train_test_split
-from sklearn.utils import resample
 from src.models.model import model_fit
 import statsmodels.api as sm
 from src.normalization.offsets import normalize_data
-from statsmodels.stats.outliers_influence import variance_inflation_factor
-from sklearn.preprocessing import PolynomialFeatures
 from src.transforms.feature_transform import add_more_features
-from src.transforms.assumptions import check_assumptions_after
-from src.transforms.pre_regression_checks import check_multicollinearity, check_perfect_multicollinearity, check_linearity
+
 
 def save_results(case, method,model, model_name, mse, ref_cat_col):
     """ Save results to the 'results' directory. """
-
     results_dir = os.path.join('results', case)
     os.makedirs(results_dir, exist_ok=True)
     
@@ -36,9 +29,6 @@ def save_results(case, method,model, model_name, mse, ref_cat_col):
 
     # Save the DataFrame to a CSV file
     coef_df.to_csv(os.path.join(results_dir, f'{model_name}_model_coefficients_{method}_{ref_cat_col}.csv'), index=True)
-
-    # coef_df.to_csv(os.path.join(results_dir, f'{model_name}_model_coefficients_{method}_{ref_cat_col}.csv'), index=True)
-
 
 def train_and_evaluate_model(x, D, y, model_name):
     X_D = pd.concat([x, D], axis=1)
@@ -62,10 +52,6 @@ def train_and_evaluate_model(x, D, y, model_name):
 
     return mse
 
-
-
-
-
 def main(ref_cat_col, method, model_name, case):
     # load the data
     data = pd.read_csv('Data/processed/communities_and_crime.csv')
@@ -84,53 +70,30 @@ def main(ref_cat_col, method, model_name, case):
 
     print(f"Shape of x after feature engineering ({case}): ", x.shape)
 
-
     x = pd.DataFrame(x)
-    
     x = x.astype(int) # convert boolean dummies to integers (0, 1)
-    print(" data types: ", x.dtypes.value_counts())
-
-    # # 1. Multicollinearity Check
-    # vif_data = check_multicollinearity(x)
-    # columns_to_drop = ['PctRecImmig5', 'PctRecImmig8', 'PctRecImmig10', 'PctLargHouseFam', 'PctLargHouseOccup', 'PersPerOccupHous', 'OwnOccMedVal', 'PctSameHouse85', 'perCapInc', 'whitePerCap']
-    # x_dropped = x.drop(columns=columns_to_drop)
-
-    # vif_data = check_multicollinearity(x_dropped)
-
-    # print("Variance Inflation Factor (VIF):", vif_data)
-
-    # # 2. Perfect Multicollinearity Check
-    # check_perfect_multicollinearity(x_dropped)
-
-    # # 3. Linearity Check
-    # check_linearity(x_dropped, y)
-
-
 
     x = normalize_data(x, method)  # normalize the data
 
     model = model_fit(x, D, y, model_name) # model
     print("population coef and std err: ", model.params['population'], model.bse['population'])
 
-
     # Fit the model on the training data and evaluate on the test data
     mse = train_and_evaluate_model(x, D, y, model_name)  
     # x = x.unsqueeze(0)
     # check_assumptions_after(x, y, model)
-
-    # save the results
     save_results(case, method, model,model_name,  mse, ref_cat_col)
 
 
 if __name__ == '__main__':
-    main(ref_cat_col= 1, method='demean', model_name='lasso', case='more_than_n') 
+    main(ref_cat_col=8, method="median", model_name='lasso', case='original') 
 
 
 # convert
- 
-
 ### keep the main set intact after kepeing interactions
     
+## woah the mean normalization is very very stable -- include this in the report (median is not)
+
     # there is a problem with increasing the dimensions of the data
     # it isnt working as expected
 ######## check for outliers

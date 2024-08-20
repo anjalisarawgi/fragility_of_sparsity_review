@@ -24,12 +24,12 @@ def model_fit(x, D, y, model):
 
     if model == "lasso":
         # step 1: Propensity score estimation
-        # lasso = LassoCV(cv=5).fit(x, D) 
-        lasso = Lasso(alpha=0.001).fit(x, D)
+        lasso = LassoCV(cv=5).fit(x, D) 
+        # lasso = Lasso(alpha=0.00001).fit(x, D)
         selected_features = x.columns[lasso.coef_ != 0]
         print("number of selected features for the control matrix: ", len(selected_features))
         print("selected features: ", selected_features)
-        # print("alpha: ", lasso.alpha)
+        print("alpha: ", lasso.alpha_)
 
         # step 2: outcome regression : ols  where y = D * Beta + W * Gamma + error 
         x_control = x[selected_features]

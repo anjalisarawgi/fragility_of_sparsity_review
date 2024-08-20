@@ -28,7 +28,7 @@ def check_multicollinearity(X):
     vif_data['Interpretation'] = vif_data['VIF'].apply(interpret_vif)
     print(vif_data)
     print("variables with VIF > 5: ", vif_data[vif_data['VIF'] > 5])
-    
+
     return vif_data #, corr_matrix
 
 def check_perfect_multicollinearity(X):
