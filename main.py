@@ -1,7 +1,7 @@
 import pandas as pd
 import numpy as np
 import os
-from src.normalization.drop_ref import process_categorical_numerical
+from src.normalization.drop_ref import process_categorical_numerical, drop_ref_cat
 from sklearn.metrics import mean_squared_error
 from sklearn.model_selection import train_test_split
 from src.models.model import model_fit
@@ -10,9 +10,9 @@ from src.normalization.offsets import normalize_data
 from src.transforms.feature_transform import add_more_features
 
 
-def save_results(case, method,model, model_name, mse, ref_cat_col):
+def save_results(case, method,model, model_name, mse, ref_cat_col, dataset_name):
     """ Save results to the 'results' directory. """
-    results_dir = os.path.join('results', case)
+    results_dir = os.path.join('results',dataset_name, case)
     os.makedirs(results_dir, exist_ok=True)
     
     # Save model coefficients and standard errors
@@ -30,13 +30,17 @@ def save_results(case, method,model, model_name, mse, ref_cat_col):
     # Save the DataFrame to a CSV file
     coef_df.to_csv(os.path.join(results_dir, f'{model_name}_model_coefficients_{method}_{ref_cat_col}.csv'), index=True)
 
-def train_and_evaluate_model(x, D, y, model_name):
+def train_and_evaluate_model(x, D, y, model_name, dataset_name):
     X_D = pd.concat([x, D], axis=1)
     X_train, X_test, y_train, y_test = train_test_split(X_D, y, test_size=0.2, random_state=42)
-
-    x = X_train.drop(columns='population')
-    D = X_train['population']
-    y = y_train
+    if dataset_name == 'communities_and_crime':
+        x = X_train.drop(columns='population')
+        D = X_train['population']
+        y = y_train
+    elif dataset_name == 'lalonde':
+        x = X_train.drop(columns='treat')
+        D = X_train['treat']
+        y = y_train
 
     model = model_fit(x, D, y, model_name) # model on the training data
 
@@ -52,41 +56,63 @@ def train_and_evaluate_model(x, D, y, model_name):
 
     return mse
 
-def main(ref_cat_col, method, model_name, case):
-    # load the data
-    data = pd.read_csv('Data/processed/communities_and_crime.csv')
-    data = process_categorical_numerical(data, ref_cat_col=ref_cat_col)
-    
-    x = data.drop(columns=['ViolentCrimesPerPop', 'population'])
-    D = data['population']
-    y = data['ViolentCrimesPerPop']
+def main(dataset_path, ref_cat_col, method, model_name, case):
+    # Load the data
+    data = pd.read_csv(dataset_path)
 
+    dataset_name = os.path.basename(dataset_path).replace('.csv', '')
+
+    # handling categorical variables
+    data, categorical_columns = process_categorical_numerical(data, dataset_name)
+    
+    data = drop_ref_cat(data, ref_cat_col, categorical_columns)
+    print("data.head() after dropping ref cat: ", data.head())  
+    print("data types in main function:", data.dtypes)
+
+
+    # Select the X, Y, and D variables
+    if dataset_name == 'communities_and_crime':
+        x = data.drop(columns=['ViolentCrimesPerPop', 'population'])
+        D = data['population']
+        y = data['ViolentCrimesPerPop']
+    elif dataset_name == 'lalonde':
+        x = data.drop(columns=['re78', 'treat'])
+        D = data['treat']
+        y = data['re78']
+    
+    # feature engineering
     if case == "original":
         print("Original case: Using the original features.")
+        print("HEAD of x: ", x.head())
     elif case == "close_to_n" or case == "more_than_n":
         print("Adding more features.")
         x = add_more_features(x, degree=2, case = case)  # Interaction terms limited to around 1800 features
         print("Shape of x after adding more features: ", x.shape)
-
-    print(f"Shape of x after feature engineering ({case}): ", x.shape)
-
-    x = pd.DataFrame(x)
-    x = x.astype(int) # convert boolean dummies to integers (0, 1)
-
-    x = normalize_data(x, method)  # normalize the data
+    
+    # x = normalize_data(x, method)  # normalize the data 
+    # print("x.head() after normalization: ", x.head())
+    
+    if dataset_name == 'communities_and_crime':
+        pass 
+    if dataset_name == 'lalonde':
+        # convert D from boolean to integer
+        D = D.astype(int)
 
     model = model_fit(x, D, y, model_name) # model
-    print("population coef and std err: ", model.params['population'], model.bse['population'])
+    if dataset_name == 'communities_and_crime':
+        print("population coef and std err: ", model.params['population'], model.bse['population'])
+    elif dataset_name == 'lalonde':
+        print("treat coef and std err: ", model.params['treat'], model.bse['treat'])
+    
+    mse = train_and_evaluate_model(x, D, y, model_name, dataset_name)  
 
-    # Fit the model on the training data and evaluate on the test data
-    mse = train_and_evaluate_model(x, D, y, model_name)  
-    # x = x.unsqueeze(0)
-    # check_assumptions_after(x, y, model)
-    save_results(case, method, model,model_name,  mse, ref_cat_col)
+    save_results(case, method, model,model_name,  mse, ref_cat_col, dataset_name)
 
 
 if __name__ == '__main__':
-    main(ref_cat_col=8, method="median", model_name='lasso', case='original') 
+    crime = 'Data/communities_and_crime/processed/communities_and_crime.csv'
+    lalonde = "Data/lalonde/processed/lalonde.csv"
+    main(dataset_path =lalonde ,  ref_cat_col=1, method="median", model_name='lasso', case='original')
 
 
 # convert

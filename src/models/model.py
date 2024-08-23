@@ -1,6 +1,6 @@
 import pandas as pd
 import numpy as np
-from src.normalization.drop_ref import process_categorical_numerical
+# from src.normalization.drop_ref import process_categorical_numerical
 from sklearn.linear_model import LinearRegression, Lasso, LassoCV
 from sklearn.metrics import mean_squared_error
 from sklearn.model_selection import train_test_split
@@ -15,7 +15,9 @@ def model_fit(x, D, y, model):
     # y = pd.to_numeric(y, errors='coerce')
     
     # Convert boolean dummies to integers (0, 1)
+    print("x shapeee: ", x.head)
     x = x.astype(int)
+    print("x shapeee: ", x.head)
     
     # Drop any remaining NaNs after conversion
     # x = x.dropna()
@@ -34,6 +36,7 @@ def model_fit(x, D, y, model):
         # step 2: outcome regression : ols  where y = D * Beta + W * Gamma + error 
         x_control = x[selected_features]
         print("x_control shape: ", x_control.shape)
+        print("data type of D"  , D.dtype)
         X = pd.concat([D, x_control], axis=1)  # combine the treatment and control matrix
         X = sm.add_constant(X)
         model = sm.OLS(y, X).fit()
