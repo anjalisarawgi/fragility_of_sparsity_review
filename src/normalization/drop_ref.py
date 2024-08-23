@@ -8,8 +8,6 @@ def process_categorical_numerical(data, dataset_name):
         categorical = data.select_dtypes(include=['category', 'object'])
         numerical = data.select_dtypes(include=['int64', 'float64'])
 
-
-
     elif dataset_name == 'lalonde':
         columns_to_convert = ['black', 'hisp', 'married', 'nodegr']
         data[columns_to_convert] = data[columns_to_convert].astype(object)
@@ -20,14 +18,10 @@ def process_categorical_numerical(data, dataset_name):
 
     print("Number of categorical variables: ", len(categorical.columns))
     print("Number of numerical variables: ", len(numerical.columns))
-
-
     print(f"Data shape after converting categorical variables: ", data_dummified.shape)
-
     return data_dummified, categorical.columns
 
     
-
 
 def drop_ref_cat(data_dummified, ref_cat_col, categorical_columns):
     # Drop the specified reference category (if applicable)
@@ -43,9 +37,7 @@ def drop_ref_cat(data_dummified, ref_cat_col, categorical_columns):
         else:
             print(f"Reference category {ref_cat_col} not found in the data.") 
             # data_dummified.drop(columns=[category_to_drop], inplace=True)
-    
     print(f"Data shape after dropping the {ref_cat_col}th reference category: ", data_dummified.shape)
-    
     return data_dummified
 
 if __name__ == '__main__':

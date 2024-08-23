@@ -10,7 +10,7 @@ from src.normalization.offsets import normalize_data
 from src.transforms.feature_transform import add_more_features
 
 
-def save_results(case, method,model, model_name, mse, ref_cat_col, dataset_name):
+def save_results(case, method,model, model_name, ref_cat_col, dataset_name):
     """ Save results to the 'results' directory. """
     results_dir = os.path.join('results',dataset_name, case)
     os.makedirs(results_dir, exist_ok=True)
@@ -21,7 +21,7 @@ def save_results(case, method,model, model_name, mse, ref_cat_col, dataset_name)
         'Coefficient': model.params,
         'StdErr': model.bse, 
         'R2': model.rsquared,
-        'MSE': mse, 
+        # 'MSE': mse, 
     })
 
     # Set the feature names as the index
@@ -104,15 +104,15 @@ def main(dataset_path, ref_cat_col, method, model_name, case):
     elif dataset_name == 'lalonde':
         print("treat coef and std err: ", model.params['treat'], model.bse['treat'])
     
-    mse = train_and_evaluate_model(x, D, y, model_name, dataset_name)  
+    # mse = train_and_evaluate_model(x, D, y, model_name, dataset_name)  
 
-    save_results(case, method, model,model_name,  mse, ref_cat_col, dataset_name)
+    save_results(case, method, model,model_name, ref_cat_col, dataset_name)
 
 
 if __name__ == '__main__':
     crime = 'Data/communities_and_crime/processed/communities_and_crime.csv'
     lalonde = "Data/lalonde/processed/lalonde.csv"
-    main(dataset_path =lalonde ,  ref_cat_col=1, method="median", model_name='lasso', case='original')
+    main(dataset_path =lalonde ,  ref_cat_col=2, method="mean", model_name='post_double_lasso', case='original')
 
 
 # convert

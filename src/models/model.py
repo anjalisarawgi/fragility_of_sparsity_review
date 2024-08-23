@@ -6,44 +6,52 @@ from sklearn.metrics import mean_squared_error
 from sklearn.model_selection import train_test_split
 from sklearn.utils import resample
 import statsmodels.api as sm
-
+from causalinference import CausalModel
 
 def model_fit(x, D, y, model):
-    # Convert all columns to numeric, coercing errors to NaN and dropping them
-    # x = x.apply(pd.to_numeric, errors='coerce')
-    # D = pd.to_numeric(D, errors='coerce')
-    # y = pd.to_numeric(y, errors='coerce')
-    
-    # Convert boolean dummies to integers (0, 1)
-    print("x shapeee: ", x.head)
+
     x = x.astype(int)
-    print("x shapeee: ", x.head)
-    
-    # Drop any remaining NaNs after conversion
-    # x = x.dropna()
-    # D = D.dropna()
-    # y = y.dropna()
 
-    if model == "lasso":
-        # step 1: Propensity score estimation
-        lasso = LassoCV(cv=5).fit(x, D) 
-        # lasso = Lasso(alpha=0.00001).fit(x, D)
-        selected_features = x.columns[lasso.coef_ != 0]
-        print("number of selected features for the control matrix: ", len(selected_features))
-        print("selected features: ", selected_features)
-        print("alpha: ", lasso.alpha_)
+    if model == "post_double_lasso":
+        print("total number of features: ", x.shape[1])
+        # first lasso: regress D on covariates 
+        lasso_D = Lasso(alpha=0.01).fit(x, D)
+        selected_features_D = x.columns[lasso_D.coef_ != 0]
+        print("selected features from first lasso: ", len(selected_features_D))
 
-        # step 2: outcome regression : ols  where y = D * Beta + W * Gamma + error 
+        # second lasso: regress y on covariates
+        lasso_Y = LassoCV(cv=5).fit(x, y)
+        selected_features_Y = x.columns[lasso_Y.coef_ != 0]
+        print("selected features from second lasso: ", len(selected_features_Y))
+
+        # union of the selected features
+        selected_features = selected_features_D.union(selected_features_Y)
+        print("Selected features from both lasso models:", len(selected_features))
+
+        # finally, OLS regression with the selected features
         x_control = x[selected_features]
-        print("x_control shape: ", x_control.shape)
-        print("data type of D"  , D.dtype)
-        X = pd.concat([D, x_control], axis=1)  # combine the treatment and control matrix
+        X = pd.concat([D, x_control], axis=1)
         X = sm.add_constant(X)
         model = sm.OLS(y, X).fit()
-        # print(model.summary())
+    
+    elif model == "causal_model_lasso":
+        # first lasso: regress D on covariates 
+        lasso_D = Lasso(alpha=0.01).fit(x, D)
+        selected_features_D = x.columns[lasso_D.coef_ != 0]
+        print("selected features from first lasso: ", len(selected_features_D))
 
-    elif model == "post_double_lasso":
-        pass
+        # causal model with the selected features
+        x_control = x[selected_features_D]
+        causal = CausalModel(Y=y.values, D=D.values, X=x_control.values)
+        causal.est_via_ols()
+        print(causal.estimates)
+        print(causal.summary_stats)
+
+
+        
+
+        
+
     else: 
         X = pd.concat([D, x], axis=1)
         X = sm.add_constant(X)
