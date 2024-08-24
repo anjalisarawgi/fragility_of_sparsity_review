@@ -11,24 +11,17 @@ from src.transforms.feature_transform import add_more_features
 
 
 def save_results(case, method,model, model_name, ref_cat_col, dataset_name):
-    """ Save results to the 'results' directory. """
     results_dir = os.path.join('results',dataset_name, case)
     os.makedirs(results_dir, exist_ok=True)
-    
-    # Save model coefficients and standard errors
     coef_df = pd.DataFrame({
         'number of features selected': model.params.shape[0],
         'Coefficient': model.params,
         'StdErr': model.bse, 
         'R2': model.rsquared,
-        # 'MSE': mse, 
     })
-
-    # Set the feature names as the index
     coef_df.index.name = 'Feature'
-
-    # Save the DataFrame to a CSV file
     coef_df.to_csv(os.path.join(results_dir, f'{model_name}_model_coefficients_{method}_{ref_cat_col}.csv'), index=True)
+
 
 def train_and_evaluate_model(x, D, y, model_name, dataset_name):
     X_D = pd.concat([x, D], axis=1)
@@ -42,33 +35,22 @@ def train_and_evaluate_model(x, D, y, model_name, dataset_name):
         D = X_train['treat']
         y = y_train
 
-    model = model_fit(x, D, y, model_name) # model on the training data
-
-    # Select the features in the test set based on the model
+    model = model_fit(x, D, y, model_name)
     X_test_selected = X_test[model.params.index[1:]]    
     X_test_selected = sm.add_constant(X_test_selected, has_constant='add')
-    print("X_test_selected shape: ", X_test_selected.shape)
-
     y_pred = model.predict(X_test_selected)
-    # Evaluate the model performance
     mse = mean_squared_error(y_test, y_pred)
-    print("Mean Squared Error on the test set: ", mse) 
-
     return mse
+
 
 def main(dataset_path, ref_cat_col, method, model_name, case):
     # Load the data
     data = pd.read_csv(dataset_path)
-
     dataset_name = os.path.basename(dataset_path).replace('.csv', '')
 
     # handling categorical variables
     data, categorical_columns = process_categorical_numerical(data, dataset_name)
-    
     data = drop_ref_cat(data, ref_cat_col, categorical_columns)
-    print("data.head() after dropping ref cat: ", data.head())  
-    print("data types in main function:", data.dtypes)
-
 
     # Select the X, Y, and D variables
     if dataset_name == 'communities_and_crime':
@@ -86,33 +68,33 @@ def main(dataset_path, ref_cat_col, method, model_name, case):
         print("HEAD of x: ", x.head())
     elif case == "close_to_n" or case == "more_than_n":
         print("Adding more features.")
-        x = add_more_features(x, degree=2, case = case)  # Interaction terms limited to around 1800 features
+        x = add_more_features(x, degree=2, case = case)
         print("Shape of x after adding more features: ", x.shape)
     
-    # x = normalize_data(x, method)  # normalize the data 
+    x = normalize_data(x, method)  # normalize the data 
     # print("x.head() after normalization: ", x.head())
     
-    if dataset_name == 'communities_and_crime':
-        pass 
     if dataset_name == 'lalonde':
-        # convert D from boolean to integer
         D = D.astype(int)
 
-    model = model_fit(x, D, y, model_name) # model
+    # model fitting
+    model = model_fit(x, D, y, model_name)
+    print(model.summary())
     if dataset_name == 'communities_and_crime':
         print("population coef and std err: ", model.params['population'], model.bse['population'])
     elif dataset_name == 'lalonde':
         print("treat coef and std err: ", model.params['treat'], model.bse['treat'])
-    
-    # mse = train_and_evaluate_model(x, D, y, model_name, dataset_name)  
 
+
+    # mse = train_and_evaluate_model(x, D, y, model_name, dataset_name)  
     save_results(case, method, model,model_name, ref_cat_col, dataset_name)
+
 
 
 if __name__ == '__main__':
     crime = 'Data/communities_and_crime/processed/communities_and_crime.csv'
     lalonde = "Data/lalonde/processed/lalonde.csv"
-    main(dataset_path =lalonde ,  ref_cat_col=2, method="mean", model_name='post_double_lasso', case='original')
+    main(dataset_path =lalonde ,  ref_cat_col=2, method="demean", model_name='post_double_lasso', case='original')
 
 
 # convert

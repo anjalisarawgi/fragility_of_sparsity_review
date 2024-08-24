@@ -3,9 +3,6 @@ from sklearn.preprocessing import PolynomialFeatures
 import pandas as pd
 
 def add_more_features(x, degree, case):
-    """
-    Add features to the data. we have 110 featues and we want it to increase it upto 1800
-    """
     # original copy
     x_original = x.copy()
 
@@ -60,23 +57,11 @@ def add_more_features(x, degree, case):
 
 
     x_final = np.hstack([x_original, X_combined])
-    final_feature_names = np.hstack([x_original.columns, combined_feature_names])
+    # final_feature_names = np.hstack([x_original.columns, combined_feature_names])
     # print("final_feature_names: ", list(final_feature_names))
 
     final_shape = x_final.shape
-    print("final_shape: ", final_shape)
 
     if case == "more_than_n" or case == "close_to_n":
         print("Number of features added: ", final_shape[1] - x_original.shape[1])
-        print("all features names: ", poly.get_feature_names_out())
-
     return x_final
-
-# if __name__=='__main__':
-#     x = np.random.rand(1900, 110)
-#     print("Original shape of the data: ", x.shape)
-#     add_more_features(x, degree=2, case='close_to_n')
-#     add_more_features(x, degree=3, case='more_than_n')
-#     add_more_features(x, degree=2, case='original')
-
-#     print("Done!")

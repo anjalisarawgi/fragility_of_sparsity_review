@@ -11,14 +11,10 @@ def process_categorical_numerical(data, dataset_name):
     elif dataset_name == 'lalonde':
         columns_to_convert = ['black', 'hisp', 'married', 'nodegr']
         data[columns_to_convert] = data[columns_to_convert].astype(object)
-
         data_dummified = pd.get_dummies(data, drop_first=False)
         categorical = data.select_dtypes(include=['category', 'object', 'bool'])
         numerical = data.select_dtypes(include=['int64', 'float64'])
 
-    print("Number of categorical variables: ", len(categorical.columns))
-    print("Number of numerical variables: ", len(numerical.columns))
-    print(f"Data shape after converting categorical variables: ", data_dummified.shape)
     return data_dummified, categorical.columns
 
     
@@ -39,11 +35,3 @@ def drop_ref_cat(data_dummified, ref_cat_col, categorical_columns):
             # data_dummified.drop(columns=[category_to_drop], inplace=True)
     print(f"Data shape after dropping the {ref_cat_col}th reference category: ", data_dummified.shape)
     return data_dummified
-
-if __name__ == '__main__':
-    data = pd.read_csv('Data/processed/communities_and_crime.csv')
-    print(data.head())
-    print("data.shape: ", data.shape)
-    data_dummified = process_categorical_numerical(data, ref_cat_col=1)
-    print(data_dummified.head())
-    print("data_dummified.shape: ", data_dummified.shape)

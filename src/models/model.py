@@ -7,11 +7,11 @@ from sklearn.model_selection import train_test_split
 from sklearn.utils import resample
 import statsmodels.api as sm
 from causalinference import CausalModel
+from sklearn.neural_network import MLPRegressor
 
 def model_fit(x, D, y, model):
-
     x = x.astype(int)
-
+    
     if model == "post_double_lasso":
         print("total number of features: ", x.shape[1])
         # first lasso: regress D on covariates 
@@ -34,23 +34,10 @@ def model_fit(x, D, y, model):
         X = sm.add_constant(X)
         model = sm.OLS(y, X).fit()
     
-    elif model == "causal_model_lasso":
-        # first lasso: regress D on covariates 
-        lasso_D = Lasso(alpha=0.01).fit(x, D)
-        selected_features_D = x.columns[lasso_D.coef_ != 0]
-        print("selected features from first lasso: ", len(selected_features_D))
-
-        # causal model with the selected features
-        x_control = x[selected_features_D]
-        causal = CausalModel(Y=y.values, D=D.values, X=x_control.values)
-        causal.est_via_ols()
-        print(causal.estimates)
-        print(causal.summary_stats)
-
-
-        
-
-        
+    # elif model == "neural_network":
+    #     X = pd.concat([D, x], axis=1)
+    #     mlp = MLPRegressor(hidden_layer_sizes=(100, 100), max_iter=1000, random_state=42)
+    #     mlp.fit(X, y)
 
     else: 
         X = pd.concat([D, x], axis=1)

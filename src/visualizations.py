@@ -7,6 +7,8 @@ import plotly.graph_objects as go
 data = pd.read_csv('Data/communities_and_crime/processed/communities_and_crime.csv')
 output_dir = 'reports/figures'
 
+
+# Dataset = Communities and Crime
 """
 1. Check which states have data available
 """
