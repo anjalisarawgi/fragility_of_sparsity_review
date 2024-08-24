@@ -3,7 +3,8 @@ import pandas as pd
 def process_categorical_numerical(data, dataset_name):  
     """Process categorical and numerical variables, and return dummified data with a specified reference category dropped."""
     
-    if dataset_name == 'communities_and_crime':
+    if dataset_name == 'communities_and_crime_unorm':
+        print("categories: ", data.select_dtypes(include=['category', 'object']).columns)
         data_dummified = pd.get_dummies(data, drop_first=False) ###???
         categorical = data.select_dtypes(include=['category', 'object'])
         numerical = data.select_dtypes(include=['int64', 'float64'])

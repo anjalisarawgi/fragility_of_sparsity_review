@@ -26,9 +26,9 @@ def save_results(case, method,model, model_name, ref_cat_col, dataset_name):
 def train_and_evaluate_model(x, D, y, model_name, dataset_name):
     X_D = pd.concat([x, D], axis=1)
     X_train, X_test, y_train, y_test = train_test_split(X_D, y, test_size=0.2, random_state=42)
-    if dataset_name == 'communities_and_crime':
-        x = X_train.drop(columns='population')
-        D = X_train['population']
+    if dataset_name == 'communities_and_crime_unorm':
+        x = X_train.drop(columns='pop')
+        D = X_train['violentPerPop']
         y = y_train
     elif dataset_name == 'lalonde':
         x = X_train.drop(columns='treat')
@@ -53,10 +53,10 @@ def main(dataset_path, ref_cat_col, method, model_name, case):
     data = drop_ref_cat(data, ref_cat_col, categorical_columns)
 
     # Select the X, Y, and D variables
-    if dataset_name == 'communities_and_crime':
-        x = data.drop(columns=['ViolentCrimesPerPop', 'population'])
-        D = data['population']
-        y = data['ViolentCrimesPerPop']
+    if dataset_name == 'communities_and_crime_unorm':
+        x = data.drop(columns=['violentPerPop', 'pop'])
+        D = data['pop']
+        y = data['violentPerPop']
     elif dataset_name == 'lalonde':
         x = data.drop(columns=['re78', 'treat'])
         D = data['treat']
@@ -72,16 +72,16 @@ def main(dataset_path, ref_cat_col, method, model_name, case):
         print("Shape of x after adding more features: ", x.shape)
     
     x = normalize_data(x, method)  # normalize the data 
-    # print("x.head() after normalization: ", x.head())
+    print("x.head() after normalization: ", x.head())
     
     if dataset_name == 'lalonde':
         D = D.astype(int)
 
     # model fitting
     model = model_fit(x, D, y, model_name)
-    print(model.summary())
-    if dataset_name == 'communities_and_crime':
-        print("population coef and std err: ", model.params['population'], model.bse['population'])
+    # print(model.summary())
+    if dataset_name == 'communities_and_crime_unorm':
+        print("population coef and std err: ", model.params['pop'], model.bse['pop'])
     elif dataset_name == 'lalonde':
         print("treat coef and std err: ", model.params['treat'], model.bse['treat'])
 
@@ -89,12 +89,10 @@ def main(dataset_path, ref_cat_col, method, model_name, case):
     # mse = train_and_evaluate_model(x, D, y, model_name, dataset_name)  
     save_results(case, method, model,model_name, ref_cat_col, dataset_name)
 
-
-
 if __name__ == '__main__':
-    crime = 'Data/communities_and_crime/processed/communities_and_crime.csv'
+    crime = 'Data/communities_and_crime_unorm/processed/communities_and_crime_unorm.csv'
     lalonde = "Data/lalonde/processed/lalonde.csv"
-    main(dataset_path =lalonde ,  ref_cat_col=2, method="demean", model_name='post_double_lasso', case='original')
+    main(dataset_path =crime ,  ref_cat_col=3, method="demean", model_name='post_double_lasso', case='more_than_n')
 
 
 # convert
