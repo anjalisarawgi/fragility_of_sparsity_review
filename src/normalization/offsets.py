@@ -29,6 +29,14 @@ def normalize_data(X, method=None, random_offset_value=35):
         median = numeric.median(axis=0)
         normalized_numeric = numeric - median
         print("Median of the data: ", median)
+
+    elif method == "min_max":
+        # Min-Max scaling to range [0, 1]
+        min_val = numeric.min(axis=0)
+        max_val = numeric.max(axis=0)
+        normalized_numeric = (numeric - min_val) / (max_val - min_val)
+        print("Min values of the data: ", min_val)
+        print("Max values of the data: ", max_val)
     
     elif method == "random":
         # Min-Max scaling to range [0, 1]

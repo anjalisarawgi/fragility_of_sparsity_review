@@ -21,9 +21,9 @@ def handle_missing_values(data):
     initial_shape = data.shape
     data = data.dropna(thresh=len(data) * 0.5, axis=1)
     print(f"Dropped {initial_shape[1] - data.shape[1]} columns with more than 50% missing values.")
-    print("number of columns dropped: ", initial_shape[1] - data.shape[1])
-    return data
 
+    return data
+ 
 def summarize_data(data):
     # print(data.isnull().sum())
     
@@ -98,59 +98,27 @@ def main(fetch_data: bool, id: int, raw_dir: str, processed_dir: str, filename: 
         data = communities_and_crime_data(id=id, directory=raw_dir, filename=filename)
     else:
         data = pd.read_csv(os.path.join(raw_dir, filename))
-    print("number of categorical variables: ", len(data.select_dtypes(include=['object']).columns))
-    print("name of categorical variables: ", data.select_dtypes(include=['object']).columns)
+
     data = handle_missing_values(data)
     summarize_data(data)
 
-    print("unique values in state column: ", data['State'].unique())
-    print("length of unique values in state column: ", len(data['State'].unique()))
-    print("missing values in state column: ", data['State'].isnull().sum())
-
-    find_missing_values_by_group(data, 'State')
-    print("find missing values by group: ", find_missing_values_by_group(data, 'State'))
+    # find_missing_values_by_group(data, 'State')
+    # print("find missing values by group: ", find_missing_values_by_group(data, 'State'))
 
     # drop all rows with state as MN, MI, IL, 
     data = data[~data['State'].isin(['MN', 'MI', 'IL', 'AL', 'NY', 'IA'])]
-    print("data shape after dropping rows with state as MN, MI, IL: ", data.shape)
-
-    # replace the missing vlaues in rapesPerPop with the mean of the column
-    data['rapesPerPop'] = data['rapesPerPop'].astype(float)
-    data['rapesPerPop'] = data['rapesPerPop'].fillna(data['rapesPerPop'].mean())
-    print("missing values in rapesPerPop column: ", data['rapesPerPop'].isnull().sum())
 
     # do the same for robberiesPerPop, rapes, robberies, assaults, assaultPerPop, burglaries, burglariesPerPop, larcenies, larceniesPerPop, autoTheft, autoTheftPerPop, arsons, arsonsPerPop, violentPerPop, nonViolPerPop
-    columns = ['robbbPerPop', 'rapes', 'robberies', 'assaults', 'assaultPerPop', 'burglaries', 'burglPerPop', 'larcenies', 'larcPerPop', 'autoTheft', 'autoTheftPerPop', 'arsons', 'arsonsPerPop', 'violentPerPop', 'nonViolPerPop']
+    columns = ['rapesPerPop','robbbPerPop', 'rapes', 'robberies', 'assaults', 'assaultPerPop', 'burglaries', 'burglPerPop', 'larcenies', 'larcPerPop', 'autoTheft', 'autoTheftPerPop', 'arsons', 'arsonsPerPop', 'violentPerPop', 'nonViolPerPop']
     for col in columns:
         data[col] = data[col].astype(float)
         data[col] = data[col].fillna(data[col].mean())
-        print(f"missing values in {col} column: ", data[col].isnull().sum())
-    
-
-
-
-    print("unique values in state column: ", data['State'].unique())
-    print("length of unique values in state column: ", len(data['State'].unique()))
-    print("missing values in state column: ", data['State'].isnull().sum())
-
-
-    # check_columns_with_missing_values(data)
-    check_columns_with_missing_values(data)
-
-    # if dataset_name == "communities_and_crime" or dataset_name == "communities_and_crime_unorm":    
-        # data = convert_fips_to_state_abbr(data)
-    
-    # data = drop_unnecessary_columns(data, dataset_name)
+        # print(f"missing values in {col} column: ", data[col].isnull().sum())
  
     x = data.drop(columns=[treatment_var, outcome_var])
     D = data[treatment_var]
     y = data[outcome_var]
     processed_data = pd.concat([x, D, y], axis=1)
-
-    print("final data shape: ", processed_data.shape)
-    # print("type of state_abbr: ", processed_data['state_abbr'].dtype)
-    print("final number of categorical variables: ", processed_data.select_dtypes(include=['category']).columns)
-    print("final number of numerical variables: ", len(processed_data.select_dtypes(include=['int64', 'float64']).columns))
 
     os.makedirs(processed_dir, exist_ok=True)
     data.to_csv(os.path.join(processed_dir, filename), index=False)
@@ -159,10 +127,10 @@ def main(fetch_data: bool, id: int, raw_dir: str, processed_dir: str, filename: 
 if __name__ == '__main__':
     fetch_data = True  # Set to False if you don't want to fetch the data again
     id = 211
-    dataset_name= 'communities_and_crime_unorm'
+    dataset_name= 'communities_and_crime'
     raw_dir = f'Data/{dataset_name}/raw'
     processed_dir = f'Data/{dataset_name}/processed/'
-    filename = 'communities_and_crime_unorm.csv'
+    filename = 'communities_and_crime.csv'
     treatment_var = 'pop' # 'population'
     outcome_var = 'violentPerPop' # 'ViolentCrimesPerPop'
 

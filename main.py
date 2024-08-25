@@ -24,11 +24,15 @@ def save_results(case, method,model, model_name, ref_cat_col, dataset_name):
 
 
 def train_and_evaluate_model(x, D, y, model_name, dataset_name):
+    print("columns of x: ", x.columns)
+    print("columns of D: ", D)
+    print("columns of y: ", y)  
     X_D = pd.concat([x, D], axis=1)
     X_train, X_test, y_train, y_test = train_test_split(X_D, y, test_size=0.2, random_state=42)
-    if dataset_name == 'communities_and_crime_unorm':
+    print("columns of X_train: ", X_train.columns)
+    if dataset_name == 'communities_and_crime':
         x = X_train.drop(columns='pop')
-        D = X_train['violentPerPop']
+        D = X_train['pop']
         y = y_train
     elif dataset_name == 'lalonde':
         x = X_train.drop(columns='treat')
@@ -51,9 +55,9 @@ def main(dataset_path, ref_cat_col, method, model_name, case):
     # handling categorical variables
     data, categorical_columns = process_categorical_numerical(data, dataset_name)
     data = drop_ref_cat(data, ref_cat_col, categorical_columns)
-
+    print("column names: ", data.columns)
     # Select the X, Y, and D variables
-    if dataset_name == 'communities_and_crime_unorm':
+    if dataset_name == 'communities_and_crime':
         x = data.drop(columns=['violentPerPop', 'pop'])
         D = data['pop']
         y = data['violentPerPop']
@@ -80,19 +84,20 @@ def main(dataset_path, ref_cat_col, method, model_name, case):
     # model fitting
     model = model_fit(x, D, y, model_name)
     # print(model.summary())
-    if dataset_name == 'communities_and_crime_unorm':
+    if dataset_name == 'communities_and_crime':
         print("population coef and std err: ", model.params['pop'], model.bse['pop'])
     elif dataset_name == 'lalonde':
         print("treat coef and std err: ", model.params['treat'], model.bse['treat'])
 
 
-    # mse = train_and_evaluate_model(x, D, y, model_name, dataset_name)  
+    mse = train_and_evaluate_model(x, D, y, model_name, dataset_name)  
+    print(f'Mean Squared Error: {mse}')
     save_results(case, method, model,model_name, ref_cat_col, dataset_name)
 
 if __name__ == '__main__':
-    crime = 'Data/communities_and_crime_unorm/processed/communities_and_crime_unorm.csv'
+    crime = 'Data/communities_and_crime/processed/communities_and_crime.csv'
     lalonde = "Data/lalonde/processed/lalonde.csv"
-    main(dataset_path =crime ,  ref_cat_col=3, method="demean", model_name='post_double_lasso', case='more_than_n')
+    main(dataset_path =crime ,  ref_cat_col=22, method="median", model_name='post_double_lasso', case='original')
 
 
 # convert

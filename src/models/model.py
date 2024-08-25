@@ -14,6 +14,8 @@ def model_fit(x, D, y, model):
     
     if model == "post_double_lasso":
         print("total number of features: ", x.shape[1])
+
+        
         # first lasso: regress D on covariates 
         lasso_D = Lasso(alpha=0.01).fit(x, D)
         # lasso_D = LassoCV(cv=5, random_state=42).fit(x, D)
