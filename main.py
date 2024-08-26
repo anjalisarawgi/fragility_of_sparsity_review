@@ -9,12 +9,14 @@ import statsmodels.api as sm
 from src.normalization.offsets import normalize_data
 from src.transforms.feature_transform import add_more_features
 # from src.models.alpha import grid_search_alpha, find_optimal_alphas
-
+from src.tests.hausman import hausman_test  
 
 def save_results(case, offset, model_name, ref_cat_col, dataset_name, 
                  features_selected_first_lasso, features_selected_second_lasso, 
                  features_selected_both_lasso,
-                 treatment_coef, treatment_stderr, split_data, mse):
+                 treatment_coef_sbe, treatment_stderr_sbe,
+                 treatment_coef_ols, treatment_stderr_ols,
+                 split_data, mse):
     """Save the results to a CSV file."""
     results_dir = os.path.join('results', dataset_name, case)
     os.makedirs(results_dir, exist_ok=True)
@@ -22,8 +24,10 @@ def save_results(case, offset, model_name, ref_cat_col, dataset_name,
         'number of features selected (first lasso)': [len(features_selected_first_lasso)],
         'number of features selected (second lasso)': [len(features_selected_second_lasso)],
         'number of features selected (both lasso)': [len(features_selected_both_lasso)],
-        'Treatment Coefficient': [treatment_coef],
-        'Treatment StdErr': [treatment_stderr]
+        'SBE Treatment Coefficient': [treatment_coef_sbe],
+        'SBE Treatment StdErr': [treatment_stderr_sbe],
+        'OLS Treatment Coefficient': [treatment_coef_ols],
+        'OLS Treatment StdErr': [treatment_stderr_ols]
     }
     if mse is not None:
         results_dict['Mean Squared Error'] = [mse]
@@ -31,8 +35,6 @@ def save_results(case, offset, model_name, ref_cat_col, dataset_name,
     results_df = pd.DataFrame(results_dict)
     split_status = "split" if split_data else "no_split"
     results_df.to_csv(os.path.join(results_dir, f'{model_name}_{offset}_{ref_cat_col}_{split_status}.csv'), index=False)
-
-
 def train_and_evaluate_model(x, D, y, model_name, dataset_name, split_data = False):
     """
     Fit the model on the full dataset and return the selected features and treatment coefficient.
@@ -50,21 +52,26 @@ def train_and_evaluate_model(x, D, y, model_name, dataset_name, split_data = Fal
             D = X_train['treat']
             y = y_train
 
-        model, features_selected_first_lasso, features_selected_second_lasso, features_selected_both_lasso  = model_fit(x, D, y, model_name)
+        sbe_model, ols_model, features_selected_first_lasso, features_selected_second_lasso, features_selected_both_lasso  = model_fit(x, D, y, model_name)
 
         # calculate the mean squared error on the test set
-        X_test_selected = X_test[model.params.index[1:]]
+        X_test_selected = X_test[sbe_model.params.index[1:]]
         X_test_selected = sm.add_constant(X_test_selected, has_constant='add')
-        y_pred = model.predict(X_test_selected)
+        y_pred = sbe_model.predict(X_test_selected)
         mse = mean_squared_error(y_test, y_pred)
+
+        # for the ols model 
     else:
-        model, features_selected_first_lasso, features_selected_second_lasso, features_selected_both_lasso  = model_fit(x, D, y, model_name)
+        sbe_model, ols_model, features_selected_first_lasso, features_selected_second_lasso, features_selected_both_lasso  = model_fit(x, D, y, model_name)
         mse = None
 
-    treatment_coef = model.params[D.name]
-    treatment_stderr = model.bse[D.name]
+    treatment_coef_sbe = sbe_model.params[D.name]
+    treatment_stderr_sbe = sbe_model.bse[D.name]
+
+    treatment_coef_ols = ols_model.params[D.name]
+    treatment_stderr_ols = ols_model.bse[D.name]
     
-    return features_selected_first_lasso, features_selected_second_lasso, features_selected_both_lasso, treatment_coef, treatment_stderr, mse
+    return features_selected_first_lasso, features_selected_second_lasso, features_selected_both_lasso, treatment_coef_sbe, treatment_stderr_sbe, treatment_coef_ols, treatment_stderr_ols, mse
 
 
 
@@ -107,12 +114,16 @@ def main(dataset_path, ref_cat_col, offset, model_name, case, split_data = False
         D = D.astype(int)
 
     # Fit the model on the entire dataset
-    features_selected_first_lasso, features_selected_second_lasso,features_selected_both_lasso, treatment_coef, treatment_stderr, mse = train_and_evaluate_model(x, D, y, model_name, dataset_name, split_data)  
+    # features_selected_first_lasso, features_selected_second_lasso,features_selected_both_lasso, treatment_coef, treatment_stderr,  mse = train_and_evaluate_model(x, D, y, model_name, dataset_name, split_data)  
+    features_selected_first_lasso, features_selected_second_lasso, features_selected_both_lasso,treatment_coef_sbe, treatment_stderr_sbe, treatment_coef_ols, treatment_stderr_ols, mse = train_and_evaluate_model(x, D, y, model_name, dataset_name, split_data)
 
     save_results(case, offset, model_name, ref_cat_col, dataset_name, 
-                 features_selected_first_lasso, features_selected_second_lasso, 
-                 features_selected_both_lasso,
-                 treatment_coef, treatment_stderr,split_data, mse)
+             features_selected_first_lasso, features_selected_second_lasso, 
+             features_selected_both_lasso,
+             treatment_coef_sbe, treatment_stderr_sbe,
+             treatment_coef_ols, treatment_stderr_ols,
+             split_data, mse)
+
 
 
 if __name__ == '__main__':

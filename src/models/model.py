@@ -52,7 +52,11 @@ def model_fit(x, D, y, model, alpha=None):
         x_control = x[selected_features]
         X = pd.concat([D, x_control], axis=1)
         X = sm.add_constant(X)
-        model = sm.OLS(y, X).fit()
+        sbe_model = sm.OLS(y, X).fit()
+
+        # 2 : ols on all the features
+        ols_model = sm.OLS(y, sm.add_constant(pd.concat([D, x], axis=1))).fit() 
+
     
     # elif model == "neural_network":
     #     X = pd.concat([D, x], axis=1)
@@ -62,8 +66,10 @@ def model_fit(x, D, y, model, alpha=None):
     else: 
         X = pd.concat([D, x], axis=1)
         X = sm.add_constant(X)
-        model = sm.OLS(y, X).fit()
-    return model, selected_features_D, selected_features_Y, selected_features
+        ols_model = sm.OLS(y, X).fit()
+        sbe_model = ols_model
+
+    return sbe_model, ols_model, selected_features_D, selected_features_Y, selected_features
        
 
     
