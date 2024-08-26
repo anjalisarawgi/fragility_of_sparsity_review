@@ -20,6 +20,10 @@ import pickle
     
 def model_fit(x, D, y, model, alpha=None):
     x = x.astype(int)
+
+    selected_features_D = []
+    selected_features_Y = []
+    selected_features = []
     
     if model == "post_double_lasso":
         print("total number of features: ", x.shape[1])
@@ -59,7 +63,7 @@ def model_fit(x, D, y, model, alpha=None):
         X = pd.concat([D, x], axis=1)
         X = sm.add_constant(X)
         model = sm.OLS(y, X).fit()
-    return model
+    return model, selected_features_D, selected_features_Y, selected_features
        
 
     
