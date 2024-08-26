@@ -8,7 +8,7 @@ from src.models.model import model_fit
 import statsmodels.api as sm
 from src.normalization.offsets import normalize_data
 from src.transforms.feature_transform import add_more_features
-
+# from src.models.alpha import grid_search_alpha, find_optimal_alphas
 
 def save_results(case, method,model, model_name, ref_cat_col, dataset_name):
     results_dir = os.path.join('results',dataset_name, case)
@@ -55,7 +55,7 @@ def main(dataset_path, ref_cat_col, method, model_name, case):
     # handling categorical variables
     data, categorical_columns = process_categorical_numerical(data, dataset_name)
     data = drop_ref_cat(data, ref_cat_col, categorical_columns)
-    print("column names: ", data.columns)
+
     # Select the X, Y, and D variables
     if dataset_name == 'communities_and_crime':
         x = data.drop(columns=['violentPerPop', 'pop'])
@@ -72,11 +72,13 @@ def main(dataset_path, ref_cat_col, method, model_name, case):
         print("HEAD of x: ", x.head())
     elif case == "close_to_n" or case == "more_than_n":
         print("Adding more features.")
-        x = add_more_features(x, degree=2, case = case)
+        if dataset_name == 'communities_and_crime':
+            x = add_more_features(x, degree=2, case = case, dataset_name=dataset_name, seed=42)
+        elif dataset_name == 'lalonde':
+            x = add_more_features(x, degree=3, case = case, dataset_name=dataset_name, seed=42)
         print("Shape of x after adding more features: ", x.shape)
     
     x = normalize_data(x, method)  # normalize the data 
-    print("x.head() after normalization: ", x.head())
     
     if dataset_name == 'lalonde':
         D = D.astype(int)
@@ -92,13 +94,17 @@ def main(dataset_path, ref_cat_col, method, model_name, case):
 
     mse = train_and_evaluate_model(x, D, y, model_name, dataset_name)  
     print(f'Mean Squared Error: {mse}')
+
     save_results(case, method, model,model_name, ref_cat_col, dataset_name)
 
 if __name__ == '__main__':
     crime = 'Data/communities_and_crime/processed/communities_and_crime.csv'
     lalonde = "Data/lalonde/processed/lalonde.csv"
-    main(dataset_path =crime ,  ref_cat_col=22, method="median", model_name='post_double_lasso', case='original')
+    main(dataset_path =lalonde ,  ref_cat_col=1, method="median", model_name='post_double_lasso', case='close_to_n')
 
+
+# problem: lasso gives different results for different runs
+    
 
 # convert
 ### keep the main set intact after kepeing interactions

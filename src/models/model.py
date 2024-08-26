@@ -8,14 +8,26 @@ from sklearn.utils import resample
 import statsmodels.api as sm
 from causalinference import CausalModel
 from sklearn.neural_network import MLPRegressor
+from sklearn.model_selection import GridSearchCV
+import pickle
+# from src.models.alpha import grid_search_alpha
 
-def model_fit(x, D, y, model):
+
+
+# def load_optimal_alpha(alpha_file='models/communities_and_crime/optimal_alpha.pkl'):
+#     with open(alpha_file, 'rb') as file:
+#         return pickle.load(file)
+    
+def model_fit(x, D, y, model, alpha=None):
     x = x.astype(int)
     
     if model == "post_double_lasso":
         print("total number of features: ", x.shape[1])
 
-        
+        # Load the optimal alpha if provided
+        # if alpha is None:
+        #     alpha = load_optimal_alpha()
+        #     print(f'Loaded optimal alpha: {alpha}')
         # first lasso: regress D on covariates 
         lasso_D = Lasso(alpha=0.01).fit(x, D)
         # lasso_D = LassoCV(cv=5, random_state=42).fit(x, D)

@@ -2,8 +2,9 @@ import numpy as np
 from sklearn.preprocessing import PolynomialFeatures
 import pandas as pd
 
-def add_more_features(x, degree, case):
+def add_more_features(x, degree, case, dataset_name, seed):
     # original copy
+    np.random.seed(seed)
     x_original = x.copy()
 
     # Convert x to DataFrame if it's not already
@@ -43,17 +44,29 @@ def add_more_features(x, degree, case):
 
     dimensions_b = int(1.10*x_original.shape[0])
     print("dimensions_b: ", dimensions_b)
-
-    if X_combined.shape[1] > 1800:
-        if case == 'close_to_n':
-            X_combined = X_combined[:, :dimensions_a]
-            combined_feature_names = combined_feature_names[:dimensions_a]
-        elif case == 'more_than_n':
-            X_combined = X_combined[:, :dimensions_b]
-            combined_feature_names = combined_feature_names[:dimensions_a]
-        else: 
-            X_combined = x_original
-            combined_feature_names = combined_feature_names[:dimensions_a]
+    print("X_combined.shape: ", X_combined.shape)
+    if dataset_name == 'communities_and_crime':
+        if X_combined.shape[1] > 1800:
+            if case == 'close_to_n':
+                X_combined = X_combined[:, :dimensions_a]
+                combined_feature_names = combined_feature_names[:dimensions_a]
+            elif case == 'more_than_n':
+                X_combined = X_combined[:, :dimensions_b]
+                combined_feature_names = combined_feature_names[:dimensions_a]
+            else: 
+                X_combined = x_original
+                combined_feature_names = combined_feature_names[:dimensions_a]
+    elif dataset_name == 'lalonde':
+        if X_combined.shape[1] > 400:
+            if case == 'close_to_n':
+                X_combined = X_combined[:, :dimensions_a]
+                combined_feature_names = combined_feature_names[:dimensions_a]
+            elif case == 'more_than_n':
+                X_combined = X_combined[:, :dimensions_b]
+                combined_feature_names = combined_feature_names[:dimensions_a]
+            else: 
+                X_combined = x_original
+                combined_feature_names = combined_feature_names[:dimensions_a]
 
 
     x_final = np.hstack([x_original, X_combined])
@@ -61,6 +74,7 @@ def add_more_features(x, degree, case):
     # print("final_feature_names: ", list(final_feature_names))
 
     final_shape = x_final.shape
+    print("Final shape: ", final_shape)
 
     if case == "more_than_n" or case == "close_to_n":
         print("Number of features added: ", final_shape[1] - x_original.shape[1])
