@@ -10,13 +10,14 @@ from src.normalization.offsets import normalize_data
 from src.transforms.feature_transform import add_more_features
 # from src.models.alpha import grid_search_alpha, find_optimal_alphas
 from src.tests.hausman import hausman_test  
+from src.tests.residual import residual_test
 
 def save_results(case, offset, model_name, ref_cat_col, dataset_name, 
                  features_selected_first_lasso, features_selected_second_lasso, 
                  features_selected_both_lasso,
                  treatment_coef_sbe, treatment_stderr_sbe,
                  treatment_coef_ols, treatment_stderr_ols,
-                 split_data, mse):
+                 split_data, mse, hausman_stat, hausman_stat_p_value, residual_test_stat, residual_test_stat_p_value):
     """Save the results to a CSV file."""
     results_dir = os.path.join('results', dataset_name, case)
     os.makedirs(results_dir, exist_ok=True)
@@ -27,7 +28,11 @@ def save_results(case, offset, model_name, ref_cat_col, dataset_name,
         'SBE Treatment Coefficient': [treatment_coef_sbe],
         'SBE Treatment StdErr': [treatment_stderr_sbe],
         'OLS Treatment Coefficient': [treatment_coef_ols],
-        'OLS Treatment StdErr': [treatment_stderr_ols]
+        'OLS Treatment StdErr': [treatment_stderr_ols], 
+        'Hausman Test Statistic': [hausman_stat],
+        'Hausman Test p-value': [hausman_stat_p_value],
+        'Residual Test Statistic': [residual_test_stat],
+        'Residual Test p-value': [residual_test_stat_p_value]
     }
     if mse is not None:
         results_dict['Mean Squared Error'] = [mse]
@@ -35,6 +40,7 @@ def save_results(case, offset, model_name, ref_cat_col, dataset_name,
     results_df = pd.DataFrame(results_dict)
     split_status = "split" if split_data else "no_split"
     results_df.to_csv(os.path.join(results_dir, f'{model_name}_{offset}_{ref_cat_col}_{split_status}.csv'), index=False)
+
 def train_and_evaluate_model(x, D, y, model_name, dataset_name, split_data = False):
     """
     Fit the model on the full dataset and return the selected features and treatment coefficient.
@@ -68,10 +74,25 @@ def train_and_evaluate_model(x, D, y, model_name, dataset_name, split_data = Fal
     treatment_coef_sbe = sbe_model.params[D.name]
     treatment_stderr_sbe = sbe_model.bse[D.name]
 
+
+
     treatment_coef_ols = ols_model.params[D.name]
     treatment_stderr_ols = ols_model.bse[D.name]
-    
-    return features_selected_first_lasso, features_selected_second_lasso, features_selected_both_lasso, treatment_coef_sbe, treatment_stderr_sbe, treatment_coef_ols, treatment_stderr_ols, mse
+
+    print("Treatment coefficient and standard error for SBE: ", treatment_coef_sbe, treatment_stderr_sbe)
+    print("Treatment coefficient and standard error for OLS: ", treatment_coef_ols, treatment_stderr_ols)
+
+
+    residuals_sbe = sbe_model.resid
+    rss_sbe = np.sum(residuals_sbe**2)
+
+    residuals_ols = ols_model.resid
+    rss_ols = np.sum(residuals_ols**2)
+
+    n_residual_test , p_residual_test = ols_model.df_resid + ols_model.df_model + 1, ols_model.df_model + 1 # degrees of freedom
+
+
+    return features_selected_first_lasso, features_selected_second_lasso, features_selected_both_lasso, treatment_coef_sbe, treatment_stderr_sbe, treatment_coef_ols, treatment_stderr_ols, rss_sbe, rss_ols, n_residual_test, p_residual_test, mse
 
 
 
@@ -115,25 +136,36 @@ def main(dataset_path, ref_cat_col, offset, model_name, case, split_data = False
 
     # Fit the model on the entire dataset
     # features_selected_first_lasso, features_selected_second_lasso,features_selected_both_lasso, treatment_coef, treatment_stderr,  mse = train_and_evaluate_model(x, D, y, model_name, dataset_name, split_data)  
-    features_selected_first_lasso, features_selected_second_lasso, features_selected_both_lasso,treatment_coef_sbe, treatment_stderr_sbe, treatment_coef_ols, treatment_stderr_ols, mse = train_and_evaluate_model(x, D, y, model_name, dataset_name, split_data)
+    features_selected_first_lasso, features_selected_second_lasso, features_selected_both_lasso,treatment_coef_sbe, treatment_stderr_sbe, treatment_coef_ols, treatment_stderr_ols, rss_sbe, rss_ols, n_residual_test, p_residual_test, mse = train_and_evaluate_model(x, D, y, model_name, dataset_name, split_data)
+
+    # Perform the Hausman test
+    hausman_test_stat, hausman_test_stat_p_value = hausman_test(treatment_coef_ols, treatment_coef_sbe, treatment_stderr_ols, treatment_stderr_sbe)
+    print(f'Hausman test statistic: {hausman_test_stat}, p-value: {hausman_test_stat_p_value}')
+
+    # Perform the residual test
+    residual_test_stat, residual_test_stat_p_value = residual_test(rss_sbe, rss_ols, n_residual_test, p_residual_test)
+    print(f'Residual test statistic: {residual_test_stat}, p-value: {residual_test_stat_p_value}')
+
 
     save_results(case, offset, model_name, ref_cat_col, dataset_name, 
              features_selected_first_lasso, features_selected_second_lasso, 
              features_selected_both_lasso,
              treatment_coef_sbe, treatment_stderr_sbe,
              treatment_coef_ols, treatment_stderr_ols,
-             split_data, mse)
+             split_data, mse, hausman_test_stat, hausman_test_stat_p_value, residual_test_stat, residual_test_stat_p_value)
+
+
+
 
 
 
 if __name__ == '__main__':
     crime = 'Data/communities_and_crime/processed/communities_and_crime.csv'
     lalonde = "Data/lalonde/processed/lalonde.csv"
-    main(dataset_path =lalonde ,  ref_cat_col=2, offset="demean", model_name='post_double_lasso', case='original', split_data=True)
-
+    main(dataset_path =crime ,  ref_cat_col=2, offset="demean", model_name='post_double_lasso', case='original', split_data=True)
 
 # problem: lasso gives different results for different runs
-    
+#### check the tests once esp the residual test and the f test inside it plsssss
 
 # convert
 ### keep the main set intact after kepeing interactions

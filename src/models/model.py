@@ -33,13 +33,13 @@ def model_fit(x, D, y, model, alpha=None):
         #     alpha = load_optimal_alpha()
         #     print(f'Loaded optimal alpha: {alpha}')
         # first lasso: regress D on covariates 
-        lasso_D = Lasso(alpha=0.01).fit(x, D)
+        lasso_D = Lasso().fit(x, D)
         # lasso_D = LassoCV(cv=5, random_state=42).fit(x, D)
         selected_features_D = x.columns[lasso_D.coef_ != 0]
         print("selected features from first lasso: ", len(selected_features_D))
 
         # second lasso: regress y on covariates
-        lasso_Y = Lasso(alpha=0.01).fit(x, y)
+        lasso_Y = Lasso().fit(x, y)
         # lasso_Y = LassoCV(cv=5, random_state=42).fit(x, y)
         selected_features_Y = x.columns[lasso_Y.coef_ != 0]
         print("selected features from second lasso: ", len(selected_features_Y))
