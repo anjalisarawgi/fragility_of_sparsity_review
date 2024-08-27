@@ -19,6 +19,11 @@ import pickle
 #         return pickle.load(file)
     
 def model_fit(x, D, y, model, alpha=None):
+    print("x shape: ", x.shape)
+    print("D shape: ", D.shape)
+    print("check if x has na or inf values: ", x.isnull().values.any())
+    # check how many na values in x
+    print("number of na values in x: ", x.isnull().sum().sum())
     x = x.astype(int)
 
     selected_features_D = []

@@ -17,9 +17,15 @@ def save_results(case, offset, model_name, ref_cat_col, dataset_name,
                  features_selected_both_lasso,
                  treatment_coef_sbe, treatment_stderr_sbe,
                  treatment_coef_ols, treatment_stderr_ols,
-                 split_data, mse, hausman_stat, hausman_stat_p_value, residual_test_stat, residual_test_stat_p_value):
+                 split_data, mse, hausman_stat, hausman_stat_p_value, residual_test_stat, residual_test_stat_p_value, subset):
     """Save the results to a CSV file."""
-    results_dir = os.path.join('results', dataset_name, case)
+    if case == "original":
+        # Create subfolders for the subsets within the original case
+        results_dir = os.path.join('results', dataset_name, case, subset)
+    else:
+        # Standard results directory for other cases
+        results_dir = os.path.join('results', dataset_name, case)
+    # results_dir = os.path.join('results', dataset_name, case)
     os.makedirs(results_dir, exist_ok=True)
     results_dict = {
         'number of features selected (first lasso)': [len(features_selected_first_lasso)],
@@ -68,6 +74,7 @@ def train_and_evaluate_model(x, D, y, model_name, dataset_name, split_data = Fal
 
         # for the ols model 
     else:
+        print("x shape in model_fit part: ", x.shape)
         sbe_model, ols_model, features_selected_first_lasso, features_selected_second_lasso, features_selected_both_lasso  = model_fit(x, D, y, model_name)
         mse = None
 
@@ -96,12 +103,24 @@ def train_and_evaluate_model(x, D, y, model_name, dataset_name, split_data = Fal
 
 
 
+# def subset_data(data, subset):
+#     if subset == '500':
+#         data = data.sample(n=500, random_state=42)
+#     elif subset == '1000':
+#         data = data.sample(n=1000, random_state=42)
+#     elif subset == 'full':
+#         pass
+#     return data
 
 
-def main(dataset_path, ref_cat_col, offset, model_name, case, split_data = False):
+def main(dataset_path, ref_cat_col, offset, model_name, case, split_data = False, subset='500'):
     # Load the data
     data = pd.read_csv(dataset_path)
     dataset_name = os.path.basename(dataset_path).replace('.csv', '')
+
+    # Subset the data
+    # data = subset_data(data, subset)
+
 
     # handling categorical variables
     data, categorical_columns = process_categorical_numerical(data, dataset_name)
@@ -116,11 +135,25 @@ def main(dataset_path, ref_cat_col, offset, model_name, case, split_data = False
         x = data.drop(columns=['re78', 'treat'])
         D = data['treat']
         y = data['re78']
-    
+    print("x shape after subsetting the data: ", x.shape)
+
     # feature engineering
     if case == "original":
         print("Original case: Using the original features.")
         print("HEAD of x: ", x.head())
+        if subset == '500':
+            x = x.sample(n=500, random_state=42).reset_index(drop=True)  # Reset index after subsetting
+            D = D.loc[x.index].reset_index(drop=True)
+            y = y.loc[x.index].reset_index(drop=True)
+            print("Shape of x after subsetting: ", x.shape)
+        elif subset == "150":
+            x = x.sample(n=150, random_state=42).reset_index(drop=True)  # Reset index after subsetting
+            D = D.loc[x.index].reset_index(drop=True)
+            y = y.loc[x.index].reset_index(drop=True)
+            print("Shape of x after subsetting: ", x.shape)
+        else:
+            print("Using the full dataset.")
+        
     elif case == "close_to_n" or case == "more_than_n":
         print("Adding more features.")
         if dataset_name == 'communities_and_crime':
@@ -130,12 +163,13 @@ def main(dataset_path, ref_cat_col, offset, model_name, case, split_data = False
         print("Shape of x after adding more features: ", x.shape)
     
     x = normalize_data(x, offset)  # normalize the data 
-    
+    print("x shape after normalizing the data: ", x.shape)
     if dataset_name == 'lalonde':
         D = D.astype(int)
 
     # Fit the model on the entire dataset
     # features_selected_first_lasso, features_selected_second_lasso,features_selected_both_lasso, treatment_coef, treatment_stderr,  mse = train_and_evaluate_model(x, D, y, model_name, dataset_name, split_data)  
+    print("x shape in main part: ", x.shape)    
     features_selected_first_lasso, features_selected_second_lasso, features_selected_both_lasso,treatment_coef_sbe, treatment_stderr_sbe, treatment_coef_ols, treatment_stderr_ols, rss_sbe, rss_ols, n_residual_test, p_residual_test, mse = train_and_evaluate_model(x, D, y, model_name, dataset_name, split_data)
 
     # Perform the Hausman test
@@ -152,17 +186,14 @@ def main(dataset_path, ref_cat_col, offset, model_name, case, split_data = False
              features_selected_both_lasso,
              treatment_coef_sbe, treatment_stderr_sbe,
              treatment_coef_ols, treatment_stderr_ols,
-             split_data, mse, hausman_test_stat, hausman_test_stat_p_value, residual_test_stat, residual_test_stat_p_value)
-
-
-
+             split_data, mse, hausman_test_stat, hausman_test_stat_p_value, residual_test_stat, residual_test_stat_p_value, subset)
 
 
 
 if __name__ == '__main__':
     crime = 'Data/communities_and_crime/processed/communities_and_crime.csv'
     lalonde = "Data/lalonde/processed/lalonde.csv"
-    main(dataset_path =crime ,  ref_cat_col=2, offset="demean", model_name='post_double_lasso', case='original', split_data=True)
+    main(dataset_path =crime ,  ref_cat_col=2, offset="demean", model_name='post_double_lasso', case='original', split_data=False, subset='full')
 
 # problem: lasso gives different results for different runs
 #### check the tests once esp the residual test and the f test inside it plsssss

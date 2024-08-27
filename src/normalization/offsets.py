@@ -2,6 +2,7 @@ import pandas as pd
 import numpy as np
 
 def normalize_data(X, method=None, random_offset_value=35):
+    print("x shape inside normalize_data: ", X.shape)
     if isinstance(X, np.ndarray):
         X = pd.DataFrame(X)
     # Select the numerical columns
@@ -55,5 +56,14 @@ def normalize_data(X, method=None, random_offset_value=35):
         raise ValueError(f"Normalization method '{method}' is not recognized.")
     
     # Concatenate the normalized numerical data with the non-numeric columns
-    normalized_X = pd.concat([normalized_numeric, non_numeric.reset_index(drop=True)], axis=1)
+    # normalized_X = pd.concat([normalized_numeric, non_numeric.reset_index(drop=True)], axis=1)
+    # print("Normalized data shape: ", normalized_X.shape)
+
+    # Reset index to ensure alignment before concatenation
+    normalized_numeric = normalized_numeric.reset_index(drop=True)
+    non_numeric = non_numeric.reset_index(drop=True)
+    
+    # Concatenate the normalized numerical data with the non-numeric columns
+    normalized_X = pd.concat([normalized_numeric, non_numeric], axis=1)
+    print("Normalized data shape: ", normalized_X.shape)
     return normalized_X
