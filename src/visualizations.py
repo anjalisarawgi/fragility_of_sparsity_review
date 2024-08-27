@@ -68,3 +68,5 @@ fig1.write_html(f'{output_dir}/violent_crimes_map.html')
 fig1.write_image(f'{output_dir}/violent_crimes_map.png')
 
 
+
+

@@ -39,14 +39,6 @@ def normalize_data(X, method=None, random_offset_value=35):
         print("Min values of the data: ", min_val)
         print("Max values of the data: ", max_val)
     
-    elif method == "random":
-        # Min-Max scaling to range [0, 1]
-        min_val = numeric.min(axis=0)
-        max_val = numeric.max(axis=0)
-        normalized_numeric = (numeric - min_val) / (max_val - min_val)
-        print("Min values of the data: ", min_val)
-        print("Max values of the data: ", max_val)
-    
     elif method == "random_offset":
         # Subtract a constant offset
         normalized_numeric = numeric - random_offset_value

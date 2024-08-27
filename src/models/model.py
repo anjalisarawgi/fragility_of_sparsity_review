@@ -18,7 +18,7 @@ import pickle
 #     with open(alpha_file, 'rb') as file:
 #         return pickle.load(file)
     
-def model_fit(x, D, y, model, alpha=None):
+def model_fit(x, D, y, model):
     print("x shape: ", x.shape)
     print("D shape: ", D.shape)
     print("check if x has na or inf values: ", x.isnull().values.any())

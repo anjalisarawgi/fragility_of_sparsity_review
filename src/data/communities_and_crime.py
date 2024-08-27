@@ -38,31 +38,6 @@ def drop_unnecessary_columns(data, dataset_name):
     # print(f"Data shape after dropping unnecessary columns: {data.shape}")
     return data
 
-def convert_fips_to_state_abbr(data, state_column='State'):
-    def fips_to_state_abbr(fips_code):
-        try:
-            return us.states.lookup(str(fips_code).zfill(2)).abbr
-        except:
-            return None
-    
-    data['state_abbr'] = data['State'].apply(fips_to_state_abbr)
-
-    manual_fips_map = {
-        '30': 'MT',  # Montana
-        '31': 'NE',  # Nebraska
-        '17': 'IL',  # Illinois
-        '26': 'MI',  # Michigan
-        '15': 'HI'   # Hawaii
-    }
-
-    data['state_abbr'] = data.apply(
-        lambda row: manual_fips_map.get(row['State'], row['state_abbr']),
-        axis=1
-    )
-
-    data['state_abbr'] = data['state_abbr'].astype('category')
-    
-    return data
 
 def check_columns_with_missing_values(data):
     columns_with_missing_values = data.columns[data.isnull().any()]
