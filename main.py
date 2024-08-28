@@ -64,7 +64,7 @@ def train_and_evaluate_model(x, D, y, model_name, dataset_name, split_data = Fal
             D = X_train['treat']
             y = y_train
 
-        sbe_model, ols_model, features_selected_first_lasso, features_selected_second_lasso, features_selected_both_lasso  = model_fit(x, D, y, model_name)
+        sbe_model, ols_model, features_selected_first_lasso, features_selected_second_lasso, features_selected_both_lasso  = model_fit(x, D, y, model_name, dataset_name)
 
         # calculate the mean squared error on the test set
         X_test_selected = X_test[sbe_model.params.index[1:]]
@@ -75,7 +75,7 @@ def train_and_evaluate_model(x, D, y, model_name, dataset_name, split_data = Fal
         # for the ols model 
     else:
         print("x shape in model_fit part: ", x.shape)
-        sbe_model, ols_model, features_selected_first_lasso, features_selected_second_lasso, features_selected_both_lasso  = model_fit(x, D, y, model_name)
+        sbe_model, ols_model, features_selected_first_lasso, features_selected_second_lasso, features_selected_both_lasso  = model_fit(x, D, y, model_name, dataset_name)
         mse = None
 
     treatment_coef_sbe = sbe_model.params[D.name]
@@ -193,10 +193,12 @@ def main(dataset_path, ref_cat_col, offset, model_name, case, split_data = False
 if __name__ == '__main__':
     crime = 'Data/communities_and_crime/processed/communities_and_crime.csv'
     lalonde = "Data/lalonde/processed/lalonde.csv"
-    main(dataset_path =crime ,  ref_cat_col=2, offset="demean", model_name='post_double_lasso', case='original', split_data=False, subset='full')
+    main(dataset_path =crime ,  ref_cat_col=5, offset="demean", model_name='post_double_lasso', case='close_to_n', split_data=False, subset='full')
 
 # problem: lasso gives different results for different runs
 #### check the tests once esp the residual test and the f test inside it plsssss
+    
+# problem: the alpha stuff you wanan discuss this in the discussion section!
 
 # convert
 ### keep the main set intact after kepeing interactions
@@ -255,3 +257,5 @@ if __name__ == '__main__':
 # cross validation
 # try different lambdas 
 # try different sparsity values
+    
+# check if you want to include R squared too :

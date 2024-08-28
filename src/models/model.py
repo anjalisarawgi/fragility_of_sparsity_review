@@ -18,7 +18,7 @@ import pickle
 #     with open(alpha_file, 'rb') as file:
 #         return pickle.load(file)
     
-def model_fit(x, D, y, model):
+def model_fit(x, D, y, model, dataset_name):
     print("x shape: ", x.shape)
     print("D shape: ", D.shape)
     print("check if x has na or inf values: ", x.isnull().values.any())
@@ -38,14 +38,21 @@ def model_fit(x, D, y, model):
         #     alpha = load_optimal_alpha()
         #     print(f'Loaded optimal alpha: {alpha}')
         # first lasso: regress D on covariates 
-        lasso_D = Lasso().fit(x, D)
-        # lasso_D = LassoCV(cv=5, random_state=42).fit(x, D)
+        # lasso_D = Lasso().fit(x, D)
+        if dataset_name == 'communities_and_crime':
+            lasso_D = LassoCV(cv=5, random_state=42).fit(x, D)
+        elif dataset_name == 'lalonde': 
+            lasso_D = Lasso(random_state=42).fit(x, D)
         selected_features_D = x.columns[lasso_D.coef_ != 0]
         print("selected features from first lasso: ", len(selected_features_D))
 
         # second lasso: regress y on covariates
-        lasso_Y = Lasso().fit(x, y)
+        # lasso_Y = Lasso().fit(x, y)
         # lasso_Y = LassoCV(cv=5, random_state=42).fit(x, y)
+        if dataset_name == 'communities_and_crime':
+            lasso_Y = LassoCV(cv=5, random_state=42).fit(x, y)
+        elif dataset_name == 'lalonde': 
+            lasso_Y = Lasso(random_state=42).fit(x, y)
         selected_features_Y = x.columns[lasso_Y.coef_ != 0]
         print("selected features from second lasso: ", len(selected_features_Y))
 

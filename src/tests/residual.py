@@ -10,6 +10,7 @@ def residual_test(rss_sbe, rss_ols, n, p):
     # Calculate the F-statistic
     rss_diff = rss_ols - rss_sbe
     if rss_diff <= 0:
+        print("rss_diff is not positive")
         return np.nan, np.nan  # Skip if the difference is not positive
     
     ##### not very sure
