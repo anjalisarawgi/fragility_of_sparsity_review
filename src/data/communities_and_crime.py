@@ -3,7 +3,7 @@ import numpy as np
 import os
 from ucimlrepo import fetch_ucirepo
 import us
-
+from statsmodels.stats.outliers_influence import variance_inflation_factor
 
 def create_directory(directory: str):
     os.makedirs(directory, exist_ok=True)
@@ -38,6 +38,29 @@ def drop_unnecessary_columns(data, dataset_name):
     # print(f"Data shape after dropping unnecessary columns: {data.shape}")
     return data
 
+# Function to detect and handle outliers using the IQR method
+def detect_and_handle_outliers(data):
+    for col in data.select_dtypes(include=[np.number]).columns:
+        Q1 = data[col].quantile(0.25)
+        Q3 = data[col].quantile(0.75)
+        IQR = Q3 - Q1
+        lower_bound = Q1 - 1.5 * IQR
+        upper_bound = Q3 + 1.5 * IQR
+        
+        # Detect outliers
+        outliers = (data[col] < lower_bound) | (data[col] > upper_bound)
+        num_outliers = outliers.sum()
+        print(f"Column {col} has {num_outliers} outliers.")
+
+        # Handling outliers: Option 1 - Remove outliers
+        # data = data[~outliers]
+
+        # Handling outliers: Option 2 - Cap the outliers
+        data.loc[data[col] < lower_bound, col] = lower_bound
+        data.loc[data[col] > upper_bound, col] = upper_bound
+        
+    return data
+
 
 def check_columns_with_missing_values(data):
     columns_with_missing_values = data.columns[data.isnull().any()]
@@ -68,6 +91,42 @@ def find_missing_values_by_group(data, group_col):
     missing_values.to_csv('missing_values_by_group.csv')
     return missing_values
 
+def communities_and_crime_data(id: int, directory: str, filename: str ) -> pd.DataFrame:
+    communities_and_crime = fetch_ucirepo(id=id) 
+    
+    X = communities_and_crime.data.features 
+    y = communities_and_crime.data.targets 
+
+    data = pd.concat([X, y], axis=1)
+    
+    create_directory(directory)
+    data.to_csv(os.path.join(directory, filename), index=False)
+    print(f"Data saved to {directory}{filename}")
+    return data
+
+# Function to calculate VIF and drop high VIF columns
+def calculate_vif(data: pd.DataFrame):
+    data = data.select_dtypes(include=[np.number])
+    
+    vif_data = pd.DataFrame()
+    vif_data["feature"] = data.columns
+    vif_data["VIF"] = [variance_inflation_factor(data.values, i) for i in range(len(data.columns))]
+    return vif_data
+
+def drop_high_vif_columns(data: pd.DataFrame, threshold: float = 10.0):
+    high_vif_columns = []
+    while True:
+        vif_data = calculate_vif(data)
+        high_vif = vif_data[vif_data["VIF"] > threshold]
+        if high_vif.empty:
+            break
+        else:
+            col_to_drop = high_vif.sort_values("VIF", ascending=False).iloc[0]["feature"]
+            print(f"Dropping column {col_to_drop} with VIF {high_vif['VIF'].max()}")
+            data = data.drop(columns=[col_to_drop])
+            high_vif_columns.append(col_to_drop)
+    return data, high_vif_columns
+
 def main(fetch_data: bool, id: int, raw_dir: str, processed_dir: str, filename: str, treatment_var: str, outcome_var: str, dataset_name:str):
     if fetch_data:
         data = communities_and_crime_data(id=id, directory=raw_dir, filename=filename)
@@ -90,14 +149,46 @@ def main(fetch_data: bool, id: int, raw_dir: str, processed_dir: str, filename: 
         data[col] = data[col].fillna(data[col].mean())
         # print(f"missing values in {col} column: ", data[col].isnull().sum())
  
+    # x = data.drop(columns=[treatment_var, outcome_var])
+    # D = data[treatment_var]
+    # y = data[outcome_var]
+    # processed_data = pd.concat([x, D, y], axis=1)
+
+    # data_cleaned = detect_and_handle_outliers(x.copy())
+    # data_cleaned, dropped_columns = drop_high_vif_columns(data_cleaned, threshold=10.0)
+    # print("Number of columns dropped due to high VIF:", len(dropped_columns))
+
+    # # concatenate the treatment and outcome variables
+    # data_final = pd.concat([data_cleaned, D, y], axis=1)
+     
+
+    # os.makedirs(processed_dir, exist_ok=True)
+    # data_final.to_csv(os.path.join(processed_dir, filename), index=False)
+    # print(f"Data saved successfully to {os.path.join(processed_dir, filename)}")
+        # Save data without multicollinearity and outlier checks
+    os.makedirs(processed_dir, exist_ok=True)
+    data.to_csv(os.path.join(processed_dir, 'communities_and_crime.csv'), index=False)
+    print(f"Data without checks saved to {os.path.join(processed_dir, 'data_without_checks.csv')}")
+
+    # Prepare data for multicollinearity and outlier checks
     x = data.drop(columns=[treatment_var, outcome_var])
     D = data[treatment_var]
     y = data[outcome_var]
-    processed_data = pd.concat([x, D, y], axis=1)
 
-    os.makedirs(processed_dir, exist_ok=True)
-    data.to_csv(os.path.join(processed_dir, filename), index=False)
-    print(f"Data saved successfully to {os.path.join(processed_dir, filename)}")
+    # Detect and handle outliers
+    data_cleaned = detect_and_handle_outliers(x.copy())
+    
+    # Drop high VIF columns
+    data_cleaned, dropped_columns = drop_high_vif_columns(data_cleaned, threshold=10.0)
+    print("Number of columns dropped due to high VIF:", len(dropped_columns))
+
+    # Concatenate the cleaned data with treatment and outcome variables
+    data_final = pd.concat([data_cleaned, D, y], axis=1)
+
+    # Save data with multicollinearity and outlier checks
+    data_final.to_csv(os.path.join(processed_dir, 'communities_and_crime_with_checks.csv'), index=False)
+    print(f"Data with checks saved to {os.path.join(processed_dir, 'data_with_checks.csv')}")
+
 
 if __name__ == '__main__':
     fetch_data = True  # Set to False if you don't want to fetch the data again
