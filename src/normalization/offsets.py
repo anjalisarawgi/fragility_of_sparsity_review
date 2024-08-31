@@ -7,8 +7,9 @@ def normalize_data(X, method=None, random_offset_value=35):
         X = pd.DataFrame(X)
     # Select the numerical columns
     numeric = X.select_dtypes(include=['int64', 'float64'])
+    print("Numeric columns: ", numeric.columns)
     print("Numerical columns: ", numeric.columns)
-    print("Number of numerical columns: ", len(numeric.columns))
+    print("Number of numerical columns!!!! ", len(numeric.columns))
     
     # Select the non-numeric columns
     non_numeric = X.select_dtypes(include=['category', 'object', 'bool'])
@@ -24,6 +25,7 @@ def normalize_data(X, method=None, random_offset_value=35):
         mean = numeric.mean(axis=0)
         normalized_numeric = numeric - mean
         print("Mean of the data: ", mean)
+        print("mean values of the data: ", numeric.mean(axis=0))
     
     elif method == "median":
         # Center around median
@@ -57,5 +59,7 @@ def normalize_data(X, method=None, random_offset_value=35):
     
     # Concatenate the normalized numerical data with the non-numeric columns
     normalized_X = pd.concat([normalized_numeric, non_numeric], axis=1)
+    # convert back to pandas DataFrame
+    normalized_X = pd.DataFrame(normalized_X)
     print("Normalized data shape: ", normalized_X.shape)
     return normalized_X

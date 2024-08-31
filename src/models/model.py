@@ -32,6 +32,7 @@ def model_fit(x, D, y, model, dataset_name):
     
     if model == "post_double_lasso":
         print("total number of features: ", x.shape[1])
+        ols_model = sm.OLS(y, sm.add_constant(pd.concat([D, x], axis=1))).fit() 
 
         # Load the optimal alpha if provided
         # if alpha is None:
@@ -40,9 +41,11 @@ def model_fit(x, D, y, model, dataset_name):
         # first lasso: regress D on covariates 
         # lasso_D = Lasso().fit(x, D)
         if dataset_name == 'communities_and_crime':
-            lasso_D = LassoCV(cv=5, random_state=42).fit(x, D)
+            lasso_D = Lasso(alpha=10, random_state=42).fit(x, D)
+            # lasso_D = LassoCV(cv=5, random_state=42).fit(x, D)
         elif dataset_name == 'lalonde': 
             lasso_D = Lasso(random_state=42).fit(x, D)
+            # lasso_D = LassoCV(cv=5, random_state=42).fit(x, D)
         selected_features_D = x.columns[lasso_D.coef_ != 0]
         print("selected features from first lasso: ", len(selected_features_D))
 
@@ -50,9 +53,11 @@ def model_fit(x, D, y, model, dataset_name):
         # lasso_Y = Lasso().fit(x, y)
         # lasso_Y = LassoCV(cv=5, random_state=42).fit(x, y)
         if dataset_name == 'communities_and_crime':
-            lasso_Y = LassoCV(cv=5, random_state=42).fit(x, y)
+            # lasso_Y = LassoCV(cv=5, random_state=42).fit(x, y)
+            lasso_Y = Lasso(alpha=10, random_state=42).fit(x, y)
         elif dataset_name == 'lalonde': 
             lasso_Y = Lasso(random_state=42).fit(x, y)
+            # lasso_Y = LassoCV(cv=5, random_state=42).fit(x, y)
         selected_features_Y = x.columns[lasso_Y.coef_ != 0]
         print("selected features from second lasso: ", len(selected_features_Y))
 
@@ -67,7 +72,7 @@ def model_fit(x, D, y, model, dataset_name):
         sbe_model = sm.OLS(y, X).fit()
 
         # 2 : ols on all the features
-        ols_model = sm.OLS(y, sm.add_constant(pd.concat([D, x], axis=1))).fit() 
+       
 
     
     # elif model == "neural_network":

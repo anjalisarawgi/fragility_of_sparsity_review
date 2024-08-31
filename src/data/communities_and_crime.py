@@ -132,6 +132,8 @@ def main(fetch_data: bool, id: int, raw_dir: str, processed_dir: str, filename: 
         data = communities_and_crime_data(id=id, directory=raw_dir, filename=filename)
     else:
         data = pd.read_csv(os.path.join(raw_dir, filename))
+    print("data shape before processing: ", data.shape)
+
 
     data = handle_missing_values(data)
     summarize_data(data)
@@ -187,6 +189,7 @@ def main(fetch_data: bool, id: int, raw_dir: str, processed_dir: str, filename: 
 
     # Save data with multicollinearity and outlier checks
     data_final.to_csv(os.path.join(processed_dir, 'communities_and_crime_with_checks.csv'), index=False)
+    print("data shape after processing: ", data_final.shape)
     print(f"Data with checks saved to {os.path.join(processed_dir, 'data_with_checks.csv')}")
 
 
