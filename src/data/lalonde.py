@@ -36,9 +36,6 @@ def detect_and_handle_outliers(data):
         num_outliers = outliers.sum()
         print(f"Column {col} has {num_outliers} outliers.")
 
-        # Handling outliers: Option 1 - Remove outliers
-        # data = data[~outliers]
-
         # Handling outliers: Option 2 - Cap the outliers
         data.loc[data[col] < lower_bound, col] = lower_bound
         data.loc[data[col] > upper_bound, col] = upper_bound
@@ -63,7 +60,6 @@ def drop_high_vif_columns(data: pd.DataFrame, threshold: float = 10.0):
             break
         else:
             col_to_drop = high_vif.sort_values("VIF", ascending=False).iloc[0]["feature"]
-            print(f"Dropping column {col_to_drop} with VIF {high_vif['VIF'].max()}")
             data = data.drop(columns=[col_to_drop])
             high_vif_columns.append(col_to_drop)
     return data, high_vif_columns
@@ -83,8 +79,7 @@ def main(fetch_data=True, raw_dir='Data/lalonde/raw', processed_dir='Data/lalond
     
     # Check for multicollinearity and drop columns with VIF > 10
     data_cleaned, dropped_columns = drop_high_vif_columns(data_cleaned, threshold=10.0)
-    print("Number of columns dropped due to high VIF:", len(dropped_columns))
-    
+
     # Save the cleaned dataset
     save_processed_data(data_cleaned, directory=processed_dir, filename='lalonde_cleaned.csv')
     
@@ -92,7 +87,4 @@ def main(fetch_data=True, raw_dir='Data/lalonde/raw', processed_dir='Data/lalond
 
 if __name__ == '__main__':
     data_no_cleaning, data_cleaned = main()
-    print("Data without cleaning:")
-    print(data_no_cleaning.head())
-    print("Data with cleaning:")
-    print(data_cleaned.head())
+

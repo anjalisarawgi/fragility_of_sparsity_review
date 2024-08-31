@@ -25,17 +25,13 @@ def handle_missing_values(data):
     return data
  
 def summarize_data(data):
-    # print(data.isnull().sum())
-    
     categorical = data.select_dtypes(include=['object']).columns
     numerical = data.select_dtypes(include=['int64', 'float64']).columns
     print(f"Categorical variables: {len(categorical)}")
     print(f"Numerical variables: {len(numerical)}")
 
 def drop_unnecessary_columns(data, dataset_name):
-    # print(f"Original data shape: {data.shape}")
     data = data.drop(columns=['communityname', 'fold', 'state'])
-    # print(f"Data shape after dropping unnecessary columns: {data.shape}")
     return data
 
 # Function to detect and handle outliers using the IQR method
@@ -52,9 +48,6 @@ def detect_and_handle_outliers(data):
         num_outliers = outliers.sum()
         print(f"Column {col} has {num_outliers} outliers.")
 
-        # Handling outliers: Option 1 - Remove outliers
-        # data = data[~outliers]
-
         # Handling outliers: Option 2 - Cap the outliers
         data.loc[data[col] < lower_bound, col] = lower_bound
         data.loc[data[col] > upper_bound, col] = upper_bound
@@ -64,10 +57,7 @@ def detect_and_handle_outliers(data):
 
 def check_columns_with_missing_values(data):
     columns_with_missing_values = data.columns[data.isnull().any()]
-    print(f"Columns with missing values: {len(columns_with_missing_values)}")
-    print("number of columns with missing values: ", len(columns_with_missing_values))
-    print("number of missiong values in columns: ", data[columns_with_missing_values].isnull().sum())
-    print(columns_with_missing_values)
+    print(f"Columns with missing values: {columns_with_missing_values}")
 
 
 def communities_and_crime_data(id: int, directory: str, filename: str ) -> pd.DataFrame:
@@ -138,9 +128,6 @@ def main(fetch_data: bool, id: int, raw_dir: str, processed_dir: str, filename: 
     data = handle_missing_values(data)
     summarize_data(data)
 
-    # find_missing_values_by_group(data, 'State')
-    # print("find missing values by group: ", find_missing_values_by_group(data, 'State'))
-
     # drop all rows with state as MN, MI, IL, 
     data = data[~data['State'].isin(['MN', 'MI', 'IL', 'AL', 'NY', 'IA'])]
 
@@ -149,25 +136,7 @@ def main(fetch_data: bool, id: int, raw_dir: str, processed_dir: str, filename: 
     for col in columns:
         data[col] = data[col].astype(float)
         data[col] = data[col].fillna(data[col].mean())
-        # print(f"missing values in {col} column: ", data[col].isnull().sum())
  
-    # x = data.drop(columns=[treatment_var, outcome_var])
-    # D = data[treatment_var]
-    # y = data[outcome_var]
-    # processed_data = pd.concat([x, D, y], axis=1)
-
-    # data_cleaned = detect_and_handle_outliers(x.copy())
-    # data_cleaned, dropped_columns = drop_high_vif_columns(data_cleaned, threshold=10.0)
-    # print("Number of columns dropped due to high VIF:", len(dropped_columns))
-
-    # # concatenate the treatment and outcome variables
-    # data_final = pd.concat([data_cleaned, D, y], axis=1)
-     
-
-    # os.makedirs(processed_dir, exist_ok=True)
-    # data_final.to_csv(os.path.join(processed_dir, filename), index=False)
-    # print(f"Data saved successfully to {os.path.join(processed_dir, filename)}")
-        # Save data without multicollinearity and outlier checks
     os.makedirs(processed_dir, exist_ok=True)
     data.to_csv(os.path.join(processed_dir, 'communities_and_crime.csv'), index=False)
     print(f"Data without checks saved to {os.path.join(processed_dir, 'data_without_checks.csv')}")

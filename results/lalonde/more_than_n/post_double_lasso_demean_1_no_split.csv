@@ -1,0 +1,2 @@
+number of features selected (first lasso),number of features selected (second lasso),number of features selected (both lasso),SBE Treatment Coefficient,SBE Treatment StdErr,OLS Treatment Coefficient,OLS Treatment StdErr,Hausman Test Statistic,Hausman Test p-value,Residual Test Statistic,Residual Test p-value,Rsquared
+125,306,306,2431.148318131286,818.0712204075427,2435.1784217556383,808.2911599934652,0.0010211124435558676,0.48725402845495924,0.0003319047137844383,1.0,

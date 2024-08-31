@@ -10,10 +10,7 @@ def residual_test(rss_sbe, rss_ols, n, p):
         print("RSS difference is not positive; residual test not valid.")
         return np.nan, np.nan  # Skip if the difference is not positive
     
-    # Calculate the F-statistic
     f_stat = (rss_diff / p) / (rss_sbe / (n - p))
-    
-    # Calculate the p-value using the F-distribution
     p_value = 1 - f.cdf(f_stat, p, n - p)
     
     return f_stat, p_value
