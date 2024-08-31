@@ -237,7 +237,7 @@ def main(dataset_path, ref_cat_col, offset, model_name, case, split_data = False
 if __name__ == '__main__':
     crime = 'Data/communities_and_crime/processed/communities_and_crime.csv'
     lalonde = "Data/lalonde/processed/lalonde.csv"
-    main(dataset_path =lalonde ,  ref_cat_col=1, offset=None , model_name='post_double_lasso', case='close_to_n', split_data=False, subset='full')
+    main(dataset_path =crime ,  ref_cat_col=3, offset=None , model_name='post_double_lasso', case='original', split_data=False, subset='full')
 
 # problem: lasso gives different results for different runs
 #### check the tests once esp the residual test and the f test inside it plsssss

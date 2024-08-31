@@ -1,0 +1,12 @@
+CausalInference==0.1.3
+dowhy==0.11.1
+matplotlib==3.8.4
+numpy==1.23.5
+pandas==2.2.2
+plotly==5.23.0
+scikit_learn==1.5.1
+scipy==1.14.1
+seaborn==0.13.2
+statsmodels==0.14.2
+ucimlrepo==0.0.7
+us==3.2.0
