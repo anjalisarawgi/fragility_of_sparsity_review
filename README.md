@@ -61,18 +61,6 @@ The results of the experiments will be stored in the results/ directory. You can
 
 - **Custom Method/Data Adjustments**: To change the code according to different methods, data sets, or dimensions, you must manually update the section under `if __name__ == "__main__"` in the `main.py` file.
 
-## Citation
-If you find this work useful in your research, please cite the following paper:
-
-```bash
-@article{kolesar2024fragility,
-  title={The Fragility of Sparsity},
-  author={Michal Kolesár and Ulrich K. Müller and Sebastian T. Roelsgaard},
-  journal={arXiv preprint arXiv:2311.02299},
-  year={2024}
-}
-```
-
 ## Contributions
 
 Contributions are welcome! Please feel free to submit a Pull Request or open an Issue for any improvements or suggestions.
